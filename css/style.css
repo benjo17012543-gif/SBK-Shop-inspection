@@ -435,3 +435,34 @@ select.pg-size { width: auto; padding: 7px 32px 7px 10px; font-size: 14px; }
   .store-table td.empty { text-align: center; }
 }
 .table th.text-right { text-align: right; }
+
+/* ---------- Floor (ชั้น) ---------- */
+.badge-floor { background: #e8eefb; color: #2c4f9e; }
+.badge-floor.none { background: #eef1ef; color: var(--muted); }
+.floor-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.floor-chips .chip { flex: 0 0 auto; }
+.chip.floor-chip.active { background: #2c4f9e; border-color: #2c4f9e; color: #fff; }
+.chip.floor-chip.active .n { color: #dbe5ff; }
+.table tr.floor-row td {
+  background: #f1f5fd; color: #2c4f9e; font-weight: 700; font-size: 14px; padding: 8px 12px;
+}
+.list .floor-head { font-weight: 700; color: #2c4f9e; margin: 14px 2px 6px; font-size: 14.5px; display: flex; justify-content: space-between; }
+.list .floor-head:first-child { margin-top: 0; }
+.floor-table td, .floor-table th { text-align: center; }
+.floor-table td:first-child, .floor-table th:first-child { text-align: left; }
+.floor-table tbody tr { cursor: pointer; }
+.floor-table tbody tr:hover td { background: var(--surface-2); }
+.floor-table tr.total td { font-weight: 700; background: var(--surface-2); cursor: default; }
+.mini-bar { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.mini-bar .progress { flex: 1; height: 8px; }
+.mini-bar span { font-size: 12.5px; width: 42px; text-align: right; }
+.count-red { color: var(--danger); font-weight: 700; }
+@media (max-width: 640px) {
+  .store-table tr.floor-row { padding: 0; border: 0; }
+  .store-table tr.floor-row td { padding: 8px 12px; }
+}
+.combo-floor { position: sticky; top: 0; z-index: 1; padding: 6px 12px; background: #f1f5fd; color: #2c4f9e; font-weight: 700; font-size: 13px; }
+@media (max-width: 640px) {
+  .store-table tr:not(.floor-row) td:nth-child(3),
+  .store-table tr:not(.floor-row) td:nth-child(4) { display: inline-block; width: auto; margin-right: 6px; }
+}

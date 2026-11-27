@@ -48,6 +48,9 @@
     <!-- หน้าย่อย 1: รายชื่อร้านค้า -->
     <section class="subpage active" data-subpage="list">
       <div class="card">
+        <div class="label">🏢 เลือกชั้น</div>
+        <div class="floor-chips" id="floorChips"></div>
+        <div class="label mt-12">สถานะ</div>
         <div class="chips" id="statusChips">
           <button class="chip active" data-status="all">ทั้งหมด <span class="n" id="cAll">0</span></button>
           <button class="chip" data-status="active">🟢 Active <span class="n" id="cActive">0</span></button>
@@ -58,8 +61,8 @@
         </div>
         <div class="table-wrap mt-12">
           <table class="table store-table">
-            <thead><tr><th>รหัส</th><th>ชื่อร้านค้า</th><th>สถานะ</th><th class="text-right admin-only hidden">จัดการ</th></tr></thead>
-            <tbody id="storeTbody"><tr><td colspan="4" class="empty">กำลังโหลด...</td></tr></tbody>
+            <thead><tr><th>รหัส</th><th>ชื่อร้านค้า</th><th>ชั้น</th><th>สถานะ</th><th class="text-right admin-only hidden">จัดการ</th></tr></thead>
+            <tbody id="storeTbody"><tr><td colspan="5" class="empty">กำลังโหลด...</td></tr></tbody>
           </table>
         </div>
         <div id="storePager"></div>
@@ -73,6 +76,8 @@
         <form id="addForm">
           <div class="field"><label for="addCode">รหัสร้านค้า <span class="req">*</span></label><input type="text" id="addCode" placeholder="เช่น S001" required></div>
           <div class="field"><label for="addName">ชื่อร้านค้า <span class="req">*</span></label><input type="text" id="addName" placeholder="ชื่อร้านค้า" required></div>
+          <div class="field"><label for="addFloor">ชั้น <span class="req">*</span></label><select id="addFloor" class="floor-select"></select>
+            <div class="hint">ระบบจะจำชั้นล่าสุดไว้ เพิ่มร้านชั้นเดียวกันต่อได้เลย</div></div>
           <button class="btn btn-primary btn-block" type="submit">💾 บันทึกร้านค้า</button>
         </form>
         <div class="hint mt-12" id="lastAdded"></div>
@@ -83,9 +88,10 @@
     <section class="subpage" data-subpage="import">
       <div class="card admin-panel" style="max-width:640px">
         <div class="card-title">📥 นำเข้าหลายร้านพร้อมกัน</div>
-        <p class="hint" style="margin-top:-4px">วาง 1 ร้านต่อ 1 บรรทัด รูปแบบ <code>รหัส,ชื่อร้าน</code>
-          (คัดลอก 2 คอลัมน์จาก Excel มาวางได้เลย) — ถ้ารหัสซ้ำกับที่มีอยู่ ระบบจะอัปเดตชื่อให้</p>
-        <textarea id="bulkText" style="min-height:220px" placeholder="S001,ร้านสมใจ&#10;S002,ร้านมีชัย"></textarea>
+        <p class="hint" style="margin-top:-4px">วาง 1 ร้านต่อ 1 บรรทัด รูปแบบ <code>รหัส,ชื่อร้าน,ชั้น</code>
+          (คัดลอก 3 คอลัมน์จาก Excel มาวางได้เลย · ถ้าไม่ใส่ชั้น จะใช้ชั้นที่เลือกด้านล่าง) — ถ้ารหัสซ้ำกับที่มีอยู่ ระบบจะอัปเดตชื่อให้</p>
+        <textarea id="bulkText" style="min-height:220px" placeholder="S001,ร้านสมใจ,B&#10;S002,ร้านมีชัย,1&#10;S003,ร้านสุขใจ,2"></textarea>
+        <div class="field mt-12"><label for="bulkFloor">ชั้นเริ่มต้น (สำหรับบรรทัดที่ไม่ได้ระบุชั้น)</label><select id="bulkFloor" class="floor-select"></select></div>
         <div class="hint" id="bulkPreview"></div>
         <button class="btn btn-primary btn-block mt-12" id="bulkGo">📥 นำเข้า</button>
       </div>

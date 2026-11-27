@@ -13,6 +13,7 @@ create table if not exists public.stores (
   id          uuid primary key default gen_random_uuid(),
   code        text not null unique,                 -- รหัสร้านค้า
   name        text not null,                        -- ชื่อร้านค้า
+  floor       text,                                 -- ชั้น เช่น B, 1, 2, 3, 4, 5
   is_active   boolean not null default true,        -- Active / Inactive
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
@@ -26,6 +27,7 @@ create table if not exists public.inspections (
   store_id         uuid not null references public.stores(id) on delete restrict,
   store_code       text,                            -- snapshot ณ วันที่ตรวจ
   store_name       text not null,                   -- snapshot ณ วันที่ตรวจ
+  store_floor      text,                            -- snapshot ชั้น ณ วันที่ตรวจ
   inspector_name   text,
   problem          text not null
                    check (problem in ('หนู', 'แมลงสาบ', 'หนู-แมลงสาบ', 'ไม่พบปัญหา')),
@@ -40,6 +42,11 @@ create table if not exists public.inspections (
   created_at       timestamptz not null default now()
 );
 
+-- รองรับฐานข้อมูลที่สร้างจากเวอร์ชันก่อน (ยังไม่มีคอลัมน์ชั้น)
+alter table public.stores      add column if not exists floor text;
+alter table public.inspections add column if not exists store_floor text;
+
+create index if not exists stores_floor_idx               on public.stores (floor, code);
 create index if not exists inspections_inspected_at_idx on public.inspections (inspected_at desc);
 create index if not exists inspections_store_month_idx  on public.inspections (store_id, inspected_at desc);
 create index if not exists stores_active_idx            on public.stores (is_active);
@@ -129,8 +136,9 @@ create policy "inspection_photos_admin_delete" on storage.objects for delete to 
 -- ---------------------------------------------------------------------
 -- 6) ข้อมูลตัวอย่าง (ลบ -- ออกถ้าต้องการ)
 -- ---------------------------------------------------------------------
--- insert into public.stores (code, name) values
---   ('S001', 'ร้านข้าวมันไก่ป้าศรี'),
---   ('S002', 'ร้านก๋วยเตี๋ยวเรือ'),
---   ('S003', 'ร้านชาไข่มุกบับเบิ้ล')
+-- insert into public.stores (code, name, floor) values
+--   ('S001', 'ร้านข้าวมันไก่ป้าศรี', 'B'),
+--   ('S002', 'ร้านก๋วยเตี๋ยวเรือ', '1'),
+--   ('S003', 'ร้านชาไข่มุกบับเบิ้ล', '2')
 -- on conflict (code) do nothing;
+notify pgrst, 'reload schema';

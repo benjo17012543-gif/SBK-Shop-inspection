@@ -73,6 +73,18 @@
       </div>
     </section>
 
+    <!-- สรุปรายชั้น -->
+    <section class="card">
+      <div class="card-title">🏢 สรุปรายชั้น</div>
+      <p class="hint" style="margin-top:-6px;margin-bottom:12px">กดที่แถวของชั้น เพื่อดูรายชื่อร้านค้าของชั้นนั้นด้านล่าง</p>
+      <div class="table-wrap">
+        <table class="table floor-table">
+          <thead><tr><th>ชั้น</th><th>ร้านทั้งหมด</th><th>ตรวจแล้ว</th><th>ยังไม่ตรวจ</th><th>ความคืบหน้า</th><th>🐀 พบหนู</th><th>🪳 พบแมลงสาบ</th></tr></thead>
+          <tbody id="floorTbody"><tr><td colspan="7" class="empty">-</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- สถิติศัตรูพืช -->
     <section class="card">
       <div class="card-title">🐾 สถิติการพบศัตรูพืช (สะสมทั้งเดือน)</div>
@@ -109,6 +121,7 @@
         <button class="tab" data-tab="todo" role="tab"><span class="tab-ico">⏳ </span>ยังไม่ได้ตรวจ <span class="count" id="tcTodo">0</span></button>
         <button class="tab" data-tab="log" role="tab"><span class="tab-ico">🗂️ </span>บันทึกทั้งหมด <span class="count" id="tcLog">0</span></button>
       </div>
+      <div class="floor-chips mt-12" id="listFloorChips"></div>
       <div class="mt-12">
         <input type="search" id="listSearch" placeholder="🔍 ค้นหาชื่อร้าน / รหัสร้าน / ผู้ตรวจ">
       </div>
