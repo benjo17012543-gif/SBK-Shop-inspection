@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a4f">
+  <title>จัดการรายชื่อร้านค้า | ระบบควบคุมศัตรูพืช</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body data-page="stores">
+  <header class="app-header">
+    <div class="inner">
+      <div class="brand">
+        <div class="brand-logo">🐀</div>
+        <div>ตรวจร้านค้า<small>ระบบติดตามศัตรูพืช</small></div>
+      </div>
+      <nav class="nav">
+        <a href="./index.html" data-page="inspect"><span class="ico">📝</span><span>บันทึกตรวจ</span></a>
+        <a href="./dashboard.html" data-page="dashboard"><span class="ico">📊</span><span>แดชบอร์ด</span></a>
+        <a href="./stores.html" data-page="stores"><span class="ico">🏪</span><span>ร้านค้า</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <div>
+        <h1>จัดการรายชื่อร้านค้า</h1>
+        <p>สำหรับผู้ดูแลระบบ (Admin) — ต้องล็อกอินก่อนจึงจะเพิ่ม/แก้ไข/ปิดใช้งานได้</p>
+      </div>
+      <div id="adminBar" class="btn-row hidden">
+        <span class="badge badge-ok" id="adminEmail" style="align-self:center"></span>
+        <button class="btn btn-ghost btn-sm" id="btnLogout">ออกจากระบบ</button>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <section class="card" id="loginCard" style="max-width:480px">
+      <div class="card-title">🔐 เข้าสู่ระบบผู้ดูแล</div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">อีเมล</label>
+          <input type="email" id="loginEmail" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">รหัสผ่าน</label>
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">เข้าสู่ระบบ</button>
+      </form>
+    </section>
+
+    <!-- Add store (admin only) -->
+    <section class="card hidden" id="addCard">
+      <div class="card-title" style="justify-content:space-between">
+        <span>➕ เพิ่มร้านค้าใหม่</span>
+        <button class="btn btn-ghost btn-sm" id="btnBulk">📥 นำเข้าหลายร้าน</button>
+      </div>
+      <form id="addForm" class="grid" style="grid-template-columns:1fr">
+        <div class="grid grid-2">
+          <div class="field"><label for="addCode">รหัสร้านค้า <span class="req">*</span></label><input type="text" id="addCode" placeholder="เช่น S001" required></div>
+          <div class="field"><label for="addName">ชื่อร้านค้า <span class="req">*</span></label><input type="text" id="addName" placeholder="ชื่อร้านค้า" required></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="submit">บันทึกร้านค้า</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Store list -->
+    <section class="card">
+      <div class="card-title">🏪 รายชื่อร้านค้า <span class="muted" style="font-weight:400" id="storeCount"></span></div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <div class="field" style="flex:3"><input type="search" id="search" placeholder="🔍 ค้นหารหัส / ชื่อร้าน"></div>
+        <div class="field" style="flex:1">
+          <select id="statusFilter">
+            <option value="all">ทุกสถานะ</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>รหัส</th><th>ชื่อร้านค้า</th><th>สถานะ</th><th class="text-right admin-only hidden">จัดการ</th></tr></thead>
+          <tbody id="storeTbody"><tr><td colspan="4" class="empty">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/common.js"></script>
+  <script src="./js/stores.js"></script>
+</body>
+</html>
