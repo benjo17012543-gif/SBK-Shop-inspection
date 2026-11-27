@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a4f">
+  <title>บันทึกการตรวจร้านค้า | ระบบควบคุมศัตรูพืช</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body data-page="inspect">
+  <header class="app-header">
+    <div class="inner">
+      <div class="brand">
+        <div class="brand-logo">🐀</div>
+        <div>ตรวจร้านค้า<small>ระบบติดตามศัตรูพืช</small></div>
+      </div>
+      <nav class="nav">
+        <a href="./index.html" data-page="inspect"><span class="ico">📝</span><span>บันทึกตรวจ</span></a>
+        <a href="./dashboard.html" data-page="dashboard"><span class="ico">📊</span><span>แดชบอร์ด</span></a>
+        <a href="./stores.html" data-page="stores"><span class="ico">🏪</span><span>ร้านค้า</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="narrow">
+    <div class="page-title">
+      <div>
+        <h1>บันทึกการตรวจร้านค้า</h1>
+        <p>กรอกข้อมูลให้ครบ ถ่ายรูป และเซ็นชื่อก่อนบันทึก</p>
+      </div>
+    </div>
+
+    <form id="inspectionForm" novalidate autocomplete="off">
+      <!-- 1. ร้านค้า -->
+      <section class="card">
+        <div class="card-title"><span class="step">1</span>ร้านค้า</div>
+        <div class="field">
+          <label for="storeSearch">ชื่อร้านค้า <span class="req">*</span></label>
+          <div class="combo">
+            <input type="search" id="storeSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสร้านค้าเพื่อค้นหา..." inputmode="search" aria-autocomplete="list" aria-controls="storeList">
+            <div class="combo-list" id="storeList" role="listbox"></div>
+          </div>
+          <input type="hidden" id="storeId">
+          <div class="selected-store" id="selectedStore">
+            <div><b id="selStoreName"></b><span id="selStoreMeta"></span></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnChangeStore">เปลี่ยน</button>
+          </div>
+          <div class="hint" id="storeHint">กำลังโหลดรายชื่อร้านค้า...</div>
+        </div>
+        <div class="field">
+          <label for="inspectorName">ชื่อพนักงานผู้ตรวจ <span class="req">*</span></label>
+          <input type="text" id="inspectorName" placeholder="ชื่อ-นามสกุล" autocomplete="name">
+          <div class="hint">ระบบจะจำชื่อไว้ในเครื่องนี้สำหรับครั้งถัดไป</div>
+        </div>
+      </section>
+
+      <!-- 2. ปัญหาและการแก้ไข -->
+      <section class="card">
+        <div class="card-title"><span class="step">2</span>ปัญหาที่พบ &amp; การแก้ไข</div>
+        <div class="field">
+          <label for="problem">ปัญหาที่พบ <span class="req">*</span></label>
+          <select id="problem">
+            <option value="">— เลือกปัญหาที่พบ —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="solutionMethod">วิธีการแก้ไขปัญหา <span class="req" id="methodReq">*</span></label>
+          <select id="solutionMethod">
+            <option value="">— เลือกวิธีแก้ไข —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="solutionDetail">รายละเอียดวิธีแก้ไขปัญหา <span class="req hidden" id="detailReq">*</span></label>
+          <textarea id="solutionDetail" placeholder="เช่น ตำแหน่งที่วาง จำนวนจุด ปริมาณที่ใช้"></textarea>
+        </div>
+      </section>
+
+      <!-- 3. รูปภาพ -->
+      <section class="card">
+        <div class="card-title"><span class="step">3</span>รูปภาพประกอบ <span class="muted" style="font-weight:400;font-size:13px" id="photoCount"></span></div>
+        <div class="photo-actions">
+          <button type="button" class="btn btn-primary" id="btnCamera">📷 ถ่ายรูป</button>
+          <button type="button" class="btn btn-outline" id="btnGallery">🖼️ เลือกจากคลัง</button>
+        </div>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="galleryInput" accept="image/*" multiple class="hidden">
+        <div class="photo-grid" id="photoGrid"></div>
+        <div class="hint" id="photoHint">ระบบจะบีบอัดรูปอัตโนมัติก่อนอัปโหลด เพื่อประหยัดพื้นที่และโหลดเร็ว</div>
+      </section>
+
+      <!-- 4. ลายเซ็น -->
+      <section class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;gap:8px;align-items:center"><span class="step">4</span>ลายเซ็นพนักงาน <span class="req">*</span></span>
+          <button type="button" class="btn btn-danger-outline btn-sm" id="btnClearSig">ล้างลายเซ็น</button>
+        </div>
+        <div class="sig-wrap" id="sigWrap">
+          <canvas id="sigCanvas" aria-label="ช่องวาดลายเซ็น"></canvas>
+          <div class="sig-line"></div>
+          <div class="sig-placeholder">✍️ เซ็นชื่อที่นี่</div>
+        </div>
+      </section>
+
+      <!-- 5. หมายเหตุ & เวลา -->
+      <section class="card">
+        <div class="card-title"><span class="step">5</span>หมายเหตุ &amp; เวลาบันทึก</div>
+        <div class="field">
+          <label for="note">หมายเหตุเพิ่มเติม</label>
+          <textarea id="note" placeholder="ข้อสังเกตอื่นๆ (ถ้ามี)"></textarea>
+        </div>
+        <div class="field">
+          <span class="label">วันที่และเวลาที่บันทึก</span>
+          <div class="timestamp-box">🕒 <span id="nowClock">-</span></div>
+          <div class="hint">ระบบบันทึกเวลาอัตโนมัติจากเซิร์ฟเวอร์เมื่อกดบันทึก</div>
+        </div>
+      </section>
+
+      <div class="submit-bar">
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnSubmit">💾 บันทึกการตรวจ</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/common.js"></script>
+  <script src="./js/image-compress.js"></script>
+  <script src="./js/signature-pad.js"></script>
+  <script src="./js/inspection.js"></script>
+</body>
+</html>

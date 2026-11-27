@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a4f">
+  <title>แดชบอร์ดสรุปผล | ระบบควบคุมศัตรูพืช</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body data-page="dashboard">
+  <header class="app-header">
+    <div class="inner">
+      <div class="brand">
+        <div class="brand-logo">🐀</div>
+        <div>ตรวจร้านค้า<small>ระบบติดตามศัตรูพืช</small></div>
+      </div>
+      <nav class="nav">
+        <a href="./index.html" data-page="inspect"><span class="ico">📝</span><span>บันทึกตรวจ</span></a>
+        <a href="./dashboard.html" data-page="dashboard"><span class="ico">📊</span><span>แดชบอร์ด</span></a>
+        <a href="./stores.html" data-page="stores"><span class="ico">🏪</span><span>ร้านค้า</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <div>
+        <h1>แดชบอร์ดสรุปผลประจำเดือน</h1>
+        <p id="periodLabel">เลือกเดือน/ปี แล้วกด "ดูข้อมูล"</p>
+      </div>
+    </div>
+
+    <!-- ตัวเลือกเดือน/ปี + Export -->
+    <section class="card">
+      <div class="grid grid-2">
+        <div class="toolbar">
+          <div class="field">
+            <label for="selMonth">เดือน</label>
+            <select id="selMonth"></select>
+          </div>
+          <div class="field">
+            <label for="selYear">ปี (พ.ศ.)</label>
+            <select id="selYear"></select>
+          </div>
+          <button class="btn btn-primary" id="btnLoad">🔎 ดูข้อมูล</button>
+        </div>
+        <div>
+          <span class="label">Export รายงานประจำเดือนที่เลือก</span>
+          <div class="export-row">
+            <button class="btn btn-ghost" id="btnPdf" disabled>📄 PDF</button>
+            <button class="btn btn-ghost" id="btnExcel" disabled>📗 Excel</button>
+            <button class="btn btn-ghost" id="btnCsv" disabled>🧾 CSV</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- การ์ดสรุป -->
+    <section class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat"><span class="ico">🏪</span><p class="label">ร้านทั้งหมด</p><div class="value" id="kTotal">-</div><div class="sub">ร้านที่เปิดใช้งาน</div></div>
+      <div class="stat primary"><span class="ico">✅</span><p class="label">ตรวจแล้ว</p><div class="value" id="kDone">-</div><div class="sub" id="kDoneSub">ร้าน</div></div>
+      <div class="stat warn"><span class="ico">⏳</span><p class="label">ยังไม่ได้ตรวจ</p><div class="value" id="kTodo">-</div><div class="sub">ร้าน</div></div>
+      <div class="stat"><span class="ico">📋</span><p class="label">บันทึกการตรวจ</p><div class="value" id="kRecords">-</div><div class="sub">ครั้ง (รวมตรวจซ้ำ)</div></div>
+    </section>
+
+    <section class="card">
+      <div class="progress-wrap">
+        <div class="progress-head"><span>ความคืบหน้าการตรวจ</span><span id="kPct">0%</span></div>
+        <div class="progress"><div id="kBar" style="width:0%"></div></div>
+      </div>
+    </section>
+
+    <!-- สถิติศัตรูพืช -->
+    <section class="card">
+      <div class="card-title">🐾 สถิติการพบศัตรูพืช (สะสมทั้งเดือน)</div>
+      <p class="hint" style="margin-top:-6px;margin-bottom:12px">นับเป็นจำนวนร้าน — ร้านที่พบอย่างน้อย 1 ครั้งในเดือนถือว่า "พบ" · กดการ์ด "พบ..." เพื่อดูรายละเอียดและรูปภาพ</p>
+      <div class="grid grid-2">
+        <div>
+          <div class="pest-group-title">🐀 หนู</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr">
+            <div class="stat danger clickable found" id="cardRat" tabindex="0" role="button">
+              <p class="label">พบหนู</p><div class="value" id="kRat">-</div>
+              <div class="sub" id="kRatSub">ร้าน</div><div class="more">ดูรายละเอียด ›</div>
+            </div>
+            <div class="stat primary"><p class="label">ไม่พบหนู</p><div class="value" id="kNoRat">-</div><div class="sub">ร้าน</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="pest-group-title">🪳 แมลงสาบ</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr">
+            <div class="stat danger clickable found" id="cardRoach" tabindex="0" role="button">
+              <p class="label">พบแมลงสาบ</p><div class="value" id="kRoach">-</div>
+              <div class="sub" id="kRoachSub">ร้าน</div><div class="more">ดูรายละเอียด ›</div>
+            </div>
+            <div class="stat primary"><p class="label">ไม่พบแมลงสาบ</p><div class="value" id="kNoRoach">-</div><div class="sub">ร้าน</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- รายชื่อร้านค้าแยกสถานะ -->
+    <section class="card">
+      <div class="card-title">📋 รายชื่อร้านค้าแยกตามสถานะ</div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="done" role="tab"><span class="tab-ico">✅ </span>ตรวจแล้ว <span class="count" id="tcDone">0</span></button>
+        <button class="tab" data-tab="todo" role="tab"><span class="tab-ico">⏳ </span>ยังไม่ได้ตรวจ <span class="count" id="tcTodo">0</span></button>
+        <button class="tab" data-tab="log" role="tab"><span class="tab-ico">🗂️ </span>บันทึกทั้งหมด <span class="count" id="tcLog">0</span></button>
+      </div>
+      <div class="mt-12">
+        <input type="search" id="listSearch" placeholder="🔍 ค้นหาชื่อร้าน / รหัสร้าน / ผู้ตรวจ">
+      </div>
+      <div class="list" id="listBox"><div class="empty">กด "ดูข้อมูล" เพื่อโหลดรายการ</div></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/common.js"></script>
+  <script src="./js/export.js"></script>
+  <script src="./js/dashboard.js"></script>
+</body>
+</html>
