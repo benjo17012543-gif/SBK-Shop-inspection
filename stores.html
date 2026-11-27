@@ -29,7 +29,7 @@
     <div class="page-title">
       <div>
         <h1>จัดการรายชื่อร้านค้า</h1>
-        <p>สำหรับผู้ดูแลระบบ (Admin) — ต้องล็อกอินก่อนจึงจะเพิ่ม/แก้ไข/ปิดใช้งานได้</p>
+        <p>ดูรายชื่อได้ทุกคน · เพิ่ม/แก้ไข/ปิดใช้งาน ต้องล็อกอิน Admin</p>
       </div>
       <div id="adminBar" class="btn-row hidden">
         <span class="badge badge-ok" id="adminEmail" style="align-self:center"></span>
@@ -37,59 +37,83 @@
       </div>
     </div>
 
-    <!-- Login -->
-    <section class="card" id="loginCard" style="max-width:480px">
-      <div class="card-title">🔐 เข้าสู่ระบบผู้ดูแล</div>
-      <form id="loginForm">
-        <div class="field">
-          <label for="loginEmail">อีเมล</label>
-          <input type="email" id="loginEmail" autocomplete="username" required>
+    <!-- เมนูหน้าย่อย -->
+    <div class="tabs subnav" role="tablist">
+      <button class="tab active" data-sub="list" role="tab"><span class="tab-ico">📋 </span>รายชื่อร้านค้า</button>
+      <button class="tab" data-sub="add" role="tab"><span class="tab-ico">➕ </span>เพิ่มร้านค้า</button>
+      <button class="tab" data-sub="import" role="tab"><span class="tab-ico">📥 </span>นำเข้าหลายร้าน</button>
+      <button class="tab" data-sub="login" role="tab" id="tabLogin"><span class="tab-ico">🔐 </span>Admin</button>
+    </div>
+
+    <!-- หน้าย่อย 1: รายชื่อร้านค้า -->
+    <section class="subpage active" data-subpage="list">
+      <div class="card">
+        <div class="chips" id="statusChips">
+          <button class="chip active" data-status="all">ทั้งหมด <span class="n" id="cAll">0</span></button>
+          <button class="chip" data-status="active">🟢 Active <span class="n" id="cActive">0</span></button>
+          <button class="chip" data-status="inactive">⚪ Inactive <span class="n" id="cInactive">0</span></button>
         </div>
-        <div class="field">
-          <label for="loginPassword">รหัสผ่าน</label>
-          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        <div class="mt-12">
+          <input type="search" id="search" placeholder="🔍 ค้นหารหัส / ชื่อร้าน">
         </div>
-        <button class="btn btn-primary btn-block" type="submit">เข้าสู่ระบบ</button>
-      </form>
+        <div class="table-wrap mt-12">
+          <table class="table store-table">
+            <thead><tr><th>รหัส</th><th>ชื่อร้านค้า</th><th>สถานะ</th><th class="text-right admin-only hidden">จัดการ</th></tr></thead>
+            <tbody id="storeTbody"><tr><td colspan="4" class="empty">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="storePager"></div>
+      </div>
     </section>
 
-    <!-- Add store (admin only) -->
-    <section class="card hidden" id="addCard">
-      <div class="card-title" style="justify-content:space-between">
-        <span>➕ เพิ่มร้านค้าใหม่</span>
-        <button class="btn btn-ghost btn-sm" id="btnBulk">📥 นำเข้าหลายร้าน</button>
-      </div>
-      <form id="addForm" class="grid" style="grid-template-columns:1fr">
-        <div class="grid grid-2">
+    <!-- หน้าย่อย 2: เพิ่มร้านค้า -->
+    <section class="subpage" data-subpage="add">
+      <div class="card admin-panel" style="max-width:640px">
+        <div class="card-title">➕ เพิ่มร้านค้าใหม่</div>
+        <form id="addForm">
           <div class="field"><label for="addCode">รหัสร้านค้า <span class="req">*</span></label><input type="text" id="addCode" placeholder="เช่น S001" required></div>
           <div class="field"><label for="addName">ชื่อร้านค้า <span class="req">*</span></label><input type="text" id="addName" placeholder="ชื่อร้านค้า" required></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" type="submit">บันทึกร้านค้า</button>
-        </div>
-      </form>
+          <button class="btn btn-primary btn-block" type="submit">💾 บันทึกร้านค้า</button>
+        </form>
+        <div class="hint mt-12" id="lastAdded"></div>
+      </div>
     </section>
 
-    <!-- Store list -->
-    <section class="card">
-      <div class="card-title">🏪 รายชื่อร้านค้า <span class="muted" style="font-weight:400" id="storeCount"></span></div>
-      <div class="toolbar" style="margin-bottom:12px">
-        <div class="field" style="flex:3"><input type="search" id="search" placeholder="🔍 ค้นหารหัส / ชื่อร้าน"></div>
-        <div class="field" style="flex:1">
-          <select id="statusFilter">
-            <option value="all">ทุกสถานะ</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table class="table">
-          <thead><tr><th>รหัส</th><th>ชื่อร้านค้า</th><th>สถานะ</th><th class="text-right admin-only hidden">จัดการ</th></tr></thead>
-          <tbody id="storeTbody"><tr><td colspan="4" class="empty">กำลังโหลด...</td></tr></tbody>
-        </table>
+    <!-- หน้าย่อย 3: นำเข้าหลายร้าน -->
+    <section class="subpage" data-subpage="import">
+      <div class="card admin-panel" style="max-width:640px">
+        <div class="card-title">📥 นำเข้าหลายร้านพร้อมกัน</div>
+        <p class="hint" style="margin-top:-4px">วาง 1 ร้านต่อ 1 บรรทัด รูปแบบ <code>รหัส,ชื่อร้าน</code>
+          (คัดลอก 2 คอลัมน์จาก Excel มาวางได้เลย) — ถ้ารหัสซ้ำกับที่มีอยู่ ระบบจะอัปเดตชื่อให้</p>
+        <textarea id="bulkText" style="min-height:220px" placeholder="S001,ร้านสมใจ&#10;S002,ร้านมีชัย"></textarea>
+        <div class="hint" id="bulkPreview"></div>
+        <button class="btn btn-primary btn-block mt-12" id="bulkGo">📥 นำเข้า</button>
       </div>
     </section>
+
+    <!-- หน้าย่อย 4: Admin (ล็อกอิน) -->
+    <section class="subpage" data-subpage="login">
+      <div class="card" style="max-width:480px" id="loginCard">
+        <div class="card-title">🔐 เข้าสู่ระบบผู้ดูแล</div>
+        <form id="loginForm">
+          <div class="field"><label for="loginEmail">อีเมล</label><input type="email" id="loginEmail" autocomplete="username" required></div>
+          <div class="field"><label for="loginPassword">รหัสผ่าน</label><input type="password" id="loginPassword" autocomplete="current-password" required></div>
+          <button class="btn btn-primary btn-block" type="submit">เข้าสู่ระบบ</button>
+        </form>
+      </div>
+      <div class="card hidden" style="max-width:480px" id="loggedCard">
+        <div class="lock-note"><div class="big">✅</div>ล็อกอินเป็น Admin แล้ว<br><b id="loggedEmail"></b></div>
+        <button class="btn btn-ghost btn-block mt-12" id="btnLogout2">ออกจากระบบ</button>
+      </div>
+    </section>
+
+    <!-- แสดงแทนหน้าย่อย Admin เมื่อยังไม่ล็อกอิน -->
+    <template id="lockedTpl">
+      <div class="card locked" style="max-width:640px">
+        <div class="lock-note"><div class="big">🔒</div>ส่วนนี้สำหรับ Admin เท่านั้น<br>กรุณาเข้าสู่ระบบก่อน</div>
+        <button class="btn btn-primary btn-block mt-12" data-goto="login">🔐 ไปหน้าเข้าสู่ระบบ</button>
+      </div>
+    </template>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>

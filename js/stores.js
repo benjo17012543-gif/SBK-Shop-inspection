@@ -1,21 +1,57 @@
 /* =====================================================================
  *  stores.js — จัดการรายชื่อร้านค้า (Admin Only)
+ *  แบ่งเป็นหน้าย่อย: รายชื่อร้านค้า | เพิ่มร้านค้า | นำเข้าหลายร้าน | Admin
  *  ใช้ Supabase Auth (อีเมล/รหัสผ่าน) + Row Level Security ฝั่งฐานข้อมูล
  *  -> ต่อให้มีคนแก้โค้ดฝั่งหน้าเว็บ ก็แก้ไขข้อมูลไม่ได้ถ้าไม่ได้ล็อกอิน
  * ===================================================================== */
 (() => {
+  const LS_SIZE = 'pest.storePageSize';
   let stores = [];
   let isAdmin = false;
+  let status = 'all';
+  let page = 1;
+  let size = 10;
+  try { size = Number(localStorage.getItem(LS_SIZE)) || 10; } catch (_) { /* ignore */ }
+
+  /* ---------- หน้าย่อย (Sub-pages) ---------- */
+  function showSub(name) {
+    $$('.subnav .tab').forEach((t) => t.classList.toggle('active', t.dataset.sub === name));
+    $$('.subpage').forEach((p) => p.classList.toggle('active', p.dataset.subpage === name));
+    try { history.replaceState(null, '', `#${name}`); } catch (_) { /* ignore */ }
+    if (name === 'add' && isAdmin) setTimeout(() => $('#addCode').focus(), 50);
+  }
+  $$('.subnav .tab').forEach((t) => t.addEventListener('click', () => showSub(t.dataset.sub)));
+  document.addEventListener('click', (e) => {
+    const g = e.target.closest('[data-goto]');
+    if (g) showSub(g.dataset.goto);
+  });
+
+  // หน้าย่อยที่ต้องเป็น Admin: ถ้ายังไม่ล็อกอินให้แสดงกล่อง "ล็อก" แทนฟอร์ม
+  function applyLock() {
+    $$('.admin-panel').forEach((panel) => {
+      panel.classList.toggle('hidden', !isAdmin);
+      const sec = panel.parentElement;
+      $('.locked', sec)?.remove();
+      if (!isAdmin) sec.appendChild($('#lockedTpl').content.cloneNode(true));
+    });
+  }
 
   /* ---------- Auth ---------- */
   function setAdmin(session) {
+    const was = isAdmin;
     isAdmin = !!session;
-    $('#loginCard').classList.toggle('hidden', isAdmin);
-    $('#addCard').classList.toggle('hidden', !isAdmin);
+    const email = session ? session.user.email : '';
     $('#adminBar').classList.toggle('hidden', !isAdmin);
+    $('#adminEmail').textContent = email ? `👤 ${email}` : '';
+    $('#loginCard').classList.toggle('hidden', isAdmin);
+    $('#loggedCard').classList.toggle('hidden', !isAdmin);
+    $('#loggedEmail').textContent = email;
+    $('#tabLogin').innerHTML = isAdmin ? '<span class="tab-ico">✅ </span>Admin' : '<span class="tab-ico">🔐 </span>Admin';
     $$('.admin-only').forEach((x) => x.classList.toggle('hidden', !isAdmin));
-    $('#adminEmail').textContent = session ? `👤 ${session.user.email}` : '';
+    applyLock();
     renderTable();
+    // เพิ่งล็อกอินจากหน้า Admin -> พาไปหน้ารายชื่อ
+    if (isAdmin && !was && $('.subpage.active')?.dataset.subpage === 'login') showSub('list');
   }
 
   $('#loginForm').addEventListener('submit', async (e) => {
@@ -32,10 +68,9 @@
     toast('เข้าสู่ระบบสำเร็จ', 'success');
   });
 
-  $('#btnLogout').addEventListener('click', async () => {
-    await db.auth.signOut();
-    toast('ออกจากระบบแล้ว');
-  });
+  const logout = async () => { await db.auth.signOut(); toast('ออกจากระบบแล้ว'); };
+  $('#btnLogout').addEventListener('click', logout);
+  $('#btnLogout2').addEventListener('click', logout);
 
   /* ---------- Load / Render ---------- */
   async function loadStores() {
@@ -50,30 +85,48 @@
 
   function renderTable() {
     const q = $('#search').value.trim().toLowerCase();
-    const st = $('#statusFilter').value;
+    const active = stores.filter((s) => s.is_active).length;
+    $('#cAll').textContent = stores.length;
+    $('#cActive').textContent = active;
+    $('#cInactive').textContent = stores.length - active;
+
     const rows = stores.filter((s) =>
-      (st === 'all' || (st === 'active') === s.is_active) &&
+      (status === 'all' || (status === 'active') === s.is_active) &&
       (!q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)));
 
-    const active = stores.filter((s) => s.is_active).length;
-    $('#storeCount').textContent = `(ทั้งหมด ${stores.length} · Active ${active} · Inactive ${stores.length - active})`;
+    page = renderPager($('#storePager'), {
+      total: rows.length, page, size,
+      onChange: (p, sz) => {
+        page = p;
+        if (sz !== size) { size = sz; try { localStorage.setItem(LS_SIZE, sz); } catch (_) { /* ignore */ } }
+        renderTable();
+        $('#storeTbody').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+    });
 
-    $('#storeTbody').innerHTML = rows.length ? rows.map((s) => `
+    $('#storeTbody').innerHTML = rows.length ? pageSlice(rows, page, size).map((s) => `
       <tr class="${s.is_active ? '' : 'inactive'}">
-        <td><b>${escapeHtml(s.code)}</b></td>
-        <td>${escapeHtml(s.name)}</td>
+        <td class="c-code"><b>${escapeHtml(s.code)}</b></td>
+        <td class="c-name">${escapeHtml(s.name)}</td>
         <td>${s.is_active ? '<span class="badge badge-ok">Active</span>' : '<span class="badge badge-muted">Inactive</span>'}</td>
         ${isAdmin ? `<td class="actions">
           <button class="btn btn-ghost btn-sm" data-act="edit" data-id="${s.id}">✏️ แก้ไข</button>
           <button class="btn ${s.is_active ? 'btn-ghost' : 'btn-outline'} btn-sm" data-act="toggle" data-id="${s.id}">
             ${s.is_active ? '⏸ ปิดใช้งาน' : '▶ เปิดใช้งาน'}</button>
-          <button class="btn btn-danger-outline btn-sm" data-act="delete" data-id="${s.id}">🗑</button>
+          <button class="btn btn-danger-outline btn-sm" data-act="delete" data-id="${s.id}" aria-label="ลบ">🗑</button>
         </td>` : ''}
       </tr>`).join('') : `<tr><td colspan="4" class="empty">${stores.length ? 'ไม่พบร้านค้าที่ค้นหา' : 'ยังไม่มีร้านค้า'}</td></tr>`;
   }
 
-  $('#search').addEventListener('input', renderTable);
-  $('#statusFilter').addEventListener('change', renderTable);
+  $('#search').addEventListener('input', () => { page = 1; renderTable(); });
+  $('#statusChips').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-status]');
+    if (!c) return;
+    status = c.dataset.status;
+    $$('#statusChips .chip').forEach((x) => x.classList.toggle('active', x === c));
+    page = 1;
+    renderTable();
+  });
 
   /* ---------- Add ---------- */
   $('#addForm').addEventListener('submit', async (e) => {
@@ -87,6 +140,7 @@
     if (error) return toast(errMsg(error), 'error');
     $('#addCode').value = '';
     $('#addName').value = '';
+    $('#lastAdded').textContent = `✅ เพิ่มล่าสุด: ${code} — ${name}`;
     toast(`เพิ่มร้าน "${name}" แล้ว`, 'success');
     $('#addCode').focus();
     loadStores();
@@ -147,33 +201,38 @@
   }
 
   /* ---------- Bulk import ---------- */
-  $('#btnBulk').addEventListener('click', () => {
-    const m = openModal('นำเข้าร้านค้าหลายร้าน', `
-      <p class="hint" style="margin-top:0">วางข้อมูล 1 ร้านต่อ 1 บรรทัด รูปแบบ <code>รหัส,ชื่อร้าน</code>
-      (คัดลอกจาก Excel 2 คอลัมน์มาวางได้เลย) — ถ้ารหัสซ้ำกับที่มีอยู่ ระบบจะอัปเดตชื่อให้</p>
-      <textarea id="bulkText" style="min-height:200px" placeholder="S001,ร้านสมใจ&#10;S002,ร้านมีชัย"></textarea>
-      <div class="btn-row mt-12">
-        <button class="btn btn-primary" id="bulkGo">นำเข้า</button>
-        <button class="btn btn-ghost" data-close>ยกเลิก</button>
-      </div>`);
-    $('#bulkGo', m).addEventListener('click', async () => {
-      const rows = $('#bulkText', m).value.split(/\r?\n/)
-        .map((line) => line.split(/\t|,/).map((x) => x.trim()))
-        .filter(([code, ...rest]) => code && rest.join(' ').trim())
-        .map(([code, ...rest]) => ({ code, name: rest.join(' ').trim(), is_active: true }));
-      const unique = [...new Map(rows.map((r) => [r.code, r])).values()];
-      if (!unique.length) return toast('ไม่พบข้อมูลที่ถูกต้อง', 'warn');
-      showLoading(`กำลังนำเข้า ${unique.length} ร้าน...`);
-      const { error } = await db.from('stores').upsert(unique, { onConflict: 'code' });
-      hideLoading();
-      if (error) return toast(errMsg(error), 'error');
-      closeModal();
-      toast(`นำเข้า/อัปเดต ${unique.length} ร้านแล้ว`, 'success');
-      loadStores();
-    });
+  function parseBulk() {
+    const rows = $('#bulkText').value.split(/\r?\n/)
+      .map((line) => line.split(/\t|,/).map((x) => x.trim()))
+      .filter(([code, ...rest]) => code && rest.join(' ').trim())
+      .map(([code, ...rest]) => ({ code, name: rest.join(' ').trim(), is_active: true }));
+    return [...new Map(rows.map((r) => [r.code, r])).values()];
+  }
+  $('#bulkText').addEventListener('input', () => {
+    const list = parseBulk();
+    const existing = new Set(stores.map((s) => s.code));
+    const upd = list.filter((r) => existing.has(r.code)).length;
+    $('#bulkPreview').textContent = list.length
+      ? `พบ ${list.length} ร้าน (ใหม่ ${list.length - upd} · อัปเดตชื่อ ${upd})` : '';
+  });
+  $('#bulkGo').addEventListener('click', async () => {
+    const unique = parseBulk();
+    if (!unique.length) return toast('ไม่พบข้อมูลที่ถูกต้อง', 'warn');
+    showLoading(`กำลังนำเข้า ${unique.length} ร้าน...`);
+    const { error } = await db.from('stores').upsert(unique, { onConflict: 'code' });
+    hideLoading();
+    if (error) return toast(errMsg(error), 'error');
+    $('#bulkText').value = '';
+    $('#bulkPreview').textContent = '';
+    toast(`นำเข้า/อัปเดต ${unique.length} ร้านแล้ว`, 'success');
+    await loadStores();
+    showSub('list');
   });
 
   /* ---------- Init ---------- */
+  const initial = location.hash.slice(1);
+  if (['list', 'add', 'import', 'login'].includes(initial)) showSub(initial);
+  applyLock();
   if (requireConfig()) {
     db.auth.getSession().then(({ data }) => setAdmin(data.session));
     db.auth.onAuthStateChange((_evt, session) => setAdmin(session));

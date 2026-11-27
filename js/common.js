@@ -174,3 +174,44 @@ document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
   $$('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.page === page));
 });
+
+/* ---------- Pagination (แบ่งหน้า) ---------- */
+/**
+ * แสดงแถบเปลี่ยนหน้า
+ * @param {HTMLElement} el     กล่องที่จะวางแถบเปลี่ยนหน้า
+ * @param {{total:number, page:number, size:number, onChange:(page:number, size:number)=>void}} o
+ */
+function renderPager(el, { total, page, size, onChange }) {
+  const pages = Math.max(1, Math.ceil(total / size));
+  page = Math.min(Math.max(1, page), pages);
+  if (!total) { el.innerHTML = ''; return page; }
+
+  // เลขหน้าแบบย่อ: 1 … 4 5 6 … 12
+  const nums = [];
+  for (let p = 1; p <= pages; p++) {
+    if (p === 1 || p === pages || Math.abs(p - page) <= 1) nums.push(p);
+    else if (nums[nums.length - 1] !== '…') nums.push('…');
+  }
+  const from = (page - 1) * size + 1;
+  const to = Math.min(total, page * size);
+  el.innerHTML = `
+    <div class="pager">
+      <div class="pager-info">แสดง <b>${from}–${to}</b> จาก <b>${total}</b> รายการ</div>
+      <div class="pager-btns">
+        <button type="button" class="pg" data-pg="${page - 1}" ${page === 1 ? 'disabled' : ''} aria-label="หน้าก่อน">‹</button>
+        ${nums.map((n) => (n === '…' ? '<span class="pg-gap">…</span>'
+          : `<button type="button" class="pg ${n === page ? 'active' : ''}" data-pg="${n}">${n}</button>`)).join('')}
+        <button type="button" class="pg" data-pg="${page + 1}" ${page === pages ? 'disabled' : ''} aria-label="หน้าถัดไป">›</button>
+      </div>
+      <select class="pg-size" aria-label="จำนวนต่อหน้า">
+        ${[10, 20, 50, 100].map((n) => `<option value="${n}" ${n === size ? 'selected' : ''}>${n} / หน้า</option>`).join('')}
+      </select>
+    </div>`;
+  el.onclick = (e) => {
+    const b = e.target.closest('[data-pg]');
+    if (b && !b.disabled) onChange(Number(b.dataset.pg), size);
+  };
+  $('.pg-size', el).onchange = (e) => onChange(1, Number(e.target.value));
+  return page;
+}
+const pageSlice = (items, page, size) => items.slice((page - 1) * size, page * size);

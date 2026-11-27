@@ -4,6 +4,8 @@
 (() => {
   let report = null;   // ผลการคำนวณของเดือนที่โหลดล่าสุด (ใช้ร่วมกับ Export)
   let activeTab = 'done';
+  let listPage = 1;
+  let listSize = 10;
 
   const selMonth = $('#selMonth');
   const selYear = $('#selYear');
@@ -47,6 +49,7 @@
           .order('inspected_at', { ascending: false })),
       ]);
       report = compute(year, month, stores, inspections);
+      listPage = 1;
       render();
       ['#btnPdf', '#btnExcel', '#btnCsv'].forEach((s) => { $(s).disabled = false; });
     } catch (err) {
@@ -127,10 +130,23 @@
     const box = $('#listBox');
     if (!report) return;
     const q = $('#listSearch').value.trim().toLowerCase();
+    $('#listPager').innerHTML = '';
+    // แบ่งหน้า: คืนรายการเฉพาะหน้าปัจจุบัน
+    const paged = (items) => {
+      listPage = renderPager($('#listPager'), {
+        total: items.length, page: listPage, size: listSize,
+        onChange: (p, sz) => {
+          listPage = p; listSize = sz;
+          renderList();
+          $('.tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+      });
+      return pageSlice(items, listPage, listSize);
+    };
 
     if (activeTab === 'done') {
       const items = report.inspected.filter((s) => matches(q, s.name, s.code, ...s.inspections.map((i) => i.inspector_name)));
-      box.innerHTML = items.length ? items.map((s) => `
+      box.innerHTML = items.length ? paged(items).map((s) => `
         <div class="list-item clickable" data-store="${s.id}">
           <div class="main"><b>${escapeHtml(s.name)}</b>
             <span>รหัส ${escapeHtml(s.code)} · ตรวจล่าสุด ${fmtDateTime(s.last.inspected_at)} · ${escapeHtml(s.last.inspector_name || '-')}</span></div>
@@ -138,7 +154,7 @@
         </div>`).join('') : '<div class="empty">ไม่มีรายการ</div>';
     } else if (activeTab === 'todo') {
       const items = report.notInspected.filter((s) => matches(q, s.name, s.code));
-      box.innerHTML = items.length ? items.map((s) => `
+      box.innerHTML = items.length ? paged(items).map((s) => `
         <div class="list-item">
           <div class="main"><b>${escapeHtml(s.name)}</b><span>รหัส ${escapeHtml(s.code)}</span></div>
           <div class="side"><span class="badge badge-warn">ยังไม่ได้ตรวจ</span></div>
@@ -148,7 +164,7 @@
       box.innerHTML = items.length ? `
         <div class="table-wrap"><table class="table">
           <thead><tr><th>วันที่/เวลา</th><th>ร้านค้า</th><th>ปัญหา</th><th>วิธีแก้ไข</th><th>ผู้ตรวจ</th><th>รูป</th></tr></thead>
-          <tbody>${items.map((i) => `
+          <tbody>${paged(items).map((i) => `
             <tr class="clickable" data-insp="${i.id}" style="cursor:pointer">
               <td>${fmtDateTime(i.inspected_at)}</td>
               <td><b>${escapeHtml(i.store_name)}</b><br><span class="muted">${escapeHtml(i.store_code || '')}</span></td>
@@ -217,10 +233,11 @@
   }));
   $$('.tab').forEach((t) => t.addEventListener('click', () => {
     activeTab = t.dataset.tab;
+    listPage = 1;
     $$('.tab').forEach((x) => x.classList.toggle('active', x === t));
     renderList();
   }));
-  $('#listSearch').addEventListener('input', renderList);
+  $('#listSearch').addEventListener('input', () => { listPage = 1; renderList(); });
   $('#listBox').addEventListener('click', (e) => {
     const st = e.target.closest('[data-store]');
     if (st) return showStoreDetail(st.dataset.store);
