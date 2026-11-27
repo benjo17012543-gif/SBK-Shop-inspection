@@ -3,8 +3,8 @@
  *  นำค่ามาจาก Supabase Dashboard > Project Settings > API
  * ===================================================================== */
 window.APP_CONFIG = {
-  SUPABASE_URL: 'https://YOUR-PROJECT-ID.supabase.co',
-  SUPABASE_ANON_KEY: 'YOUR-SUPABASE-ANON-KEY',
+  SUPABASE_URL: 'https://tkklsupaxezxnxpacidk.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_Ji9G34XqBU8-zHAyRRevQQ_IIWtUuUz',
 
   // ชื่อ Bucket ใน Supabase Storage (ต้องตรงกับ supabase/schema.sql)
   STORAGE_BUCKET: 'inspection-photos',
