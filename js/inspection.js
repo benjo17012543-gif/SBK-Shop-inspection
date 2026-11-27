@@ -10,6 +10,7 @@
   let photos = []; // { id, blob, url, origSize, ext }
   let processing = 0;
   let hlIndex = -1;
+  let floor = 'all';
 
   const el = {
     form: $('#inspectionForm'),
@@ -72,40 +73,59 @@
       const now = new Date();
       const { start, end } = monthRange(now.getFullYear(), now.getMonth() + 1);
       const [s, i] = await Promise.all([
-        db.from('stores').select('id, code, name').eq('is_active', true).order('name'),
+        db.from('stores').select('*').eq('is_active', true).order('code'),
         db.from('inspections').select('store_id').gte('inspected_at', start).lt('inspected_at', end),
       ]);
       if (s.error) throw s.error;
-      stores = s.data || [];
+      stores = (s.data || []).sort(byFloorCode);
       inspectedThisMonth = new Map();
       (i.data || []).forEach((r) => inspectedThisMonth.set(r.store_id, (inspectedThisMonth.get(r.store_id) || 0) + 1));
       const done = stores.filter((x) => inspectedThisMonth.has(x.id)).length;
       el.storeHint.textContent = `ร้านค้าที่เปิดใช้งาน ${stores.length} ร้าน · ตรวจแล้วเดือนนี้ ${done} ร้าน`;
+      renderChips();
     } catch (err) {
       el.storeHint.textContent = 'โหลดรายชื่อร้านค้าไม่สำเร็จ: ' + errMsg(err);
       toast(errMsg(err), 'error');
     }
   }
 
+  function renderChips() {
+    renderFloorChips($('#floorChips'), {
+      stores, value: floor,
+      countFn: (list) => `${list.filter((x) => inspectedThisMonth.has(x.id)).length}/${list.length}`,
+      onChange: (v) => {
+        floor = v;
+        renderChips();
+        if (el.storeId.value) clearStore();
+        el.search.focus();
+        renderList();
+      },
+    });
+  }
+
   function filterStores(q) {
     q = q.trim().toLowerCase();
-    const list = q
-      ? stores.filter((s) => s.name.toLowerCase().includes(q) || String(s.code).toLowerCase().includes(q))
-      : stores;
-    // ร้านที่ยังไม่ได้ตรวจเดือนนี้ขึ้นก่อน
-    return [...list].sort((a, b) => (inspectedThisMonth.has(a.id) - inspectedThisMonth.has(b.id))).slice(0, 60);
+    const list = stores.filter((s) => floorMatch(floor, s.floor) &&
+      (!q || s.name.toLowerCase().includes(q) || String(s.code).toLowerCase().includes(q)));
+    // เรียงตามชั้น -> ร้านที่ยังไม่ได้ตรวจเดือนนี้ขึ้นก่อน -> รหัส
+    return list.sort((a, b) => floorRank(a.floor) - floorRank(b.floor) ||
+      (inspectedThisMonth.has(a.id) - inspectedThisMonth.has(b.id)) || byFloorCode(a, b)).slice(0, 80);
   }
 
   function renderList() {
     const items = filterStores(el.search.value);
     hlIndex = -1;
     if (!items.length) {
-      el.list.innerHTML = `<div class="combo-empty">${stores.length ? 'ไม่พบร้านค้าที่ค้นหา' : 'ยังไม่มีรายชื่อร้านค้า'}</div>`;
+      el.list.innerHTML = `<div class="combo-empty">${stores.length ? `ไม่พบร้านค้า${floor === 'all' ? '' : 'ใน' + floorLabel(floor)}` : 'ยังไม่มีรายชื่อร้านค้า'}</div>`;
     } else {
+      let prev = null;
       el.list.innerHTML = items.map((s) => {
         const n = inspectedThisMonth.get(s.id);
-        return `<div class="combo-item" role="option" data-id="${s.id}">
-          <div><div>${escapeHtml(s.name)}</div><div class="code">รหัส ${escapeHtml(s.code)}</div></div>
+        const f = s.floor || '';
+        const head = f !== prev ? `<div class="combo-floor">🏢 ${escapeHtml(floorLabel(f))}</div>` : '';
+        prev = f;
+        return `${head}<div class="combo-item" role="option" data-id="${s.id}">
+          <div><div>${escapeHtml(s.name)}</div><div class="code">รหัส ${escapeHtml(s.code)} · ${escapeHtml(floorLabel(s.floor))}</div></div>
           ${n ? `<span class="badge badge-ok">ตรวจแล้ว ${n} ครั้ง</span>` : '<span class="badge badge-warn">ยังไม่ตรวจ</span>'}
         </div>`;
       }).join('');
@@ -119,7 +139,7 @@
     el.storeId.value = s.id;
     el.selName.textContent = s.name;
     const n = inspectedThisMonth.get(s.id);
-    el.selMeta.textContent = `รหัส ${s.code}` + (n ? ` · เดือนนี้ตรวจแล้ว ${n} ครั้ง` : ' · ยังไม่ได้ตรวจเดือนนี้');
+    el.selMeta.textContent = `รหัส ${s.code} · ${floorLabel(s.floor)}` + (n ? ` · เดือนนี้ตรวจแล้ว ${n} ครั้ง` : ' · ยังไม่ได้ตรวจเดือนนี้');
     el.selected.classList.add('show');
     el.search.closest('.combo').classList.add('hidden');
     el.list.classList.remove('open');
@@ -271,11 +291,12 @@
 
       // 3) บันทึกข้อมูล (timestamp ใช้เวลาเซิร์ฟเวอร์อัตโนมัติ)
       showLoading('กำลังบันทึกข้อมูล...');
-      const { error } = await db.from('inspections').insert({
+      const row = {
         id,
         store_id: store.id,
         store_code: store.code,
         store_name: store.name,
+        store_floor: store.floor || null,
         inspector_name: el.inspector.value.trim(),
         problem: el.problem.value,
         solution_method: el.problem.value === 'ไม่พบปัญหา' ? null : el.method.value,
@@ -283,11 +304,18 @@
         note: el.note.value.trim() || null,
         photo_urls: photoUrls,
         signature_url: signatureUrl,
-      });
+      };
+      let { error } = await db.from('inspections').insert(row);
+      // ฐานข้อมูลเวอร์ชันเก่ายังไม่มีคอลัมน์ store_floor -> บันทึกโดยไม่ใส่ชั้น
+      if (error && /store_floor/.test(error.message || '')) {
+        delete row.store_floor;
+        ({ error } = await db.from('inspections').insert(row));
+      }
       if (error) throw error;
 
       try { localStorage.setItem(LS_INSPECTOR, el.inspector.value.trim()); } catch (_) { /* ignore */ }
       inspectedThisMonth.set(store.id, (inspectedThisMonth.get(store.id) || 0) + 1);
+      renderChips();
       hideLoading();
       toast(`บันทึกการตรวจ "${store.name}" เรียบร้อยแล้ว ✅`, 'success', 4000);
       resetForm();

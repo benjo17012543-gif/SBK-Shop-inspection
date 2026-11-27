@@ -9,9 +9,19 @@
   let stores = [];
   let isAdmin = false;
   let status = 'all';
+  let floor = 'all';
+  const LS_FLOOR = 'pest.lastFloor';
   let page = 1;
   let size = 10;
   try { size = Number(localStorage.getItem(LS_SIZE)) || 10; } catch (_) { /* ignore */ }
+
+  /* ---------- ตัวเลือกชั้น ---------- */
+  const floorOptions = (sel) => [...FLOORS.map((f) => `<option value="${escapeHtml(f)}" ${f === sel ? 'selected' : ''}>ชั้น ${escapeHtml(f)}</option>`),
+    `<option value="" ${!sel ? 'selected' : ''}>ไม่ระบุชั้น</option>`].join('');
+  let lastFloor = FLOORS[0];
+  try { lastFloor = localStorage.getItem(LS_FLOOR) ?? FLOORS[0]; } catch (_) { /* ignore */ }
+  $('#addFloor').innerHTML = floorOptions(lastFloor);
+  $('#bulkFloor').innerHTML = floorOptions(lastFloor);
 
   /* ---------- หน้าย่อย (Sub-pages) ---------- */
   function showSub(name) {
@@ -76,21 +86,26 @@
   async function loadStores() {
     const { data, error } = await db.from('stores').select('*').order('code');
     if (error) {
-      $('#storeTbody').innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(errMsg(error))}</td></tr>`;
+      $('#storeTbody').innerHTML = `<tr><td colspan="5" class="empty">${escapeHtml(errMsg(error))}</td></tr>`;
       return;
     }
-    stores = data || [];
+    stores = (data || []).sort(byFloorCode);
     renderTable();
   }
 
   function renderTable() {
     const q = $('#search').value.trim().toLowerCase();
-    const active = stores.filter((s) => s.is_active).length;
-    $('#cAll').textContent = stores.length;
+    renderFloorChips($('#floorChips'), {
+      stores, value: floor,
+      onChange: (v) => { floor = v; page = 1; renderTable(); },
+    });
+    const inFloor = stores.filter((s) => floorMatch(floor, s.floor));
+    const active = inFloor.filter((s) => s.is_active).length;
+    $('#cAll').textContent = inFloor.length;
     $('#cActive').textContent = active;
-    $('#cInactive').textContent = stores.length - active;
+    $('#cInactive').textContent = inFloor.length - active;
 
-    const rows = stores.filter((s) =>
+    const rows = inFloor.filter((s) =>
       (status === 'all' || (status === 'active') === s.is_active) &&
       (!q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)));
 
@@ -104,10 +119,22 @@
       },
     });
 
-    $('#storeTbody').innerHTML = rows.length ? pageSlice(rows, page, size).map((s) => `
+    // แทรกหัวข้อชั้นคั่นระหว่างกลุ่ม
+    const cols = isAdmin ? 5 : 4;
+    const countByFloor = new Map();
+    rows.forEach((s) => countByFloor.set(s.floor || '', (countByFloor.get(s.floor || '') || 0) + 1));
+    let prevFloor = null;
+    const floorHead = (s) => {
+      const f = s.floor || '';
+      if (f === prevFloor) return '';
+      prevFloor = f;
+      return `<tr class="floor-row"><td colspan="${cols}">🏢 ${escapeHtml(floorLabel(f))} · ${countByFloor.get(f)} ร้าน</td></tr>`;
+    };
+    $('#storeTbody').innerHTML = rows.length ? pageSlice(rows, page, size).map((s) => `${floorHead(s)}
       <tr class="${s.is_active ? '' : 'inactive'}">
         <td class="c-code"><b>${escapeHtml(s.code)}</b></td>
         <td class="c-name">${escapeHtml(s.name)}</td>
+        <td>${floorBadge(s.floor)}</td>
         <td>${s.is_active ? '<span class="badge badge-ok">Active</span>' : '<span class="badge badge-muted">Inactive</span>'}</td>
         ${isAdmin ? `<td class="actions">
           <button class="btn btn-ghost btn-sm" data-act="edit" data-id="${s.id}">✏️ แก้ไข</button>
@@ -115,7 +142,7 @@
             ${s.is_active ? '⏸ ปิดใช้งาน' : '▶ เปิดใช้งาน'}</button>
           <button class="btn btn-danger-outline btn-sm" data-act="delete" data-id="${s.id}" aria-label="ลบ">🗑</button>
         </td>` : ''}
-      </tr>`).join('') : `<tr><td colspan="4" class="empty">${stores.length ? 'ไม่พบร้านค้าที่ค้นหา' : 'ยังไม่มีร้านค้า'}</td></tr>`;
+      </tr>`).join('') : `<tr><td colspan="${cols}" class="empty">${stores.length ? 'ไม่พบร้านค้าตามเงื่อนไขที่เลือก' : 'ยังไม่มีร้านค้า'}</td></tr>`;
   }
 
   $('#search').addEventListener('input', () => { page = 1; renderTable(); });
@@ -133,14 +160,16 @@
     e.preventDefault();
     const code = $('#addCode').value.trim();
     const name = $('#addName').value.trim();
+    const fl = $('#addFloor').value || null;
     if (!code || !name) return toast('กรุณากรอกรหัสและชื่อร้านค้า', 'warn');
+    try { localStorage.setItem(LS_FLOOR, fl || ''); } catch (_) { /* ignore */ }
     showLoading('กำลังบันทึก...');
-    const { error } = await db.from('stores').insert({ code, name, is_active: true });
+    const { error } = await db.from('stores').insert({ code, name, floor: fl, is_active: true });
     hideLoading();
     if (error) return toast(errMsg(error), 'error');
     $('#addCode').value = '';
     $('#addName').value = '';
-    $('#lastAdded').textContent = `✅ เพิ่มล่าสุด: ${code} — ${name}`;
+    $('#lastAdded').textContent = `✅ เพิ่มล่าสุด: ${code} — ${name} (${floorLabel(fl)})`;
     toast(`เพิ่มร้าน "${name}" แล้ว`, 'success');
     $('#addCode').focus();
     loadStores();
@@ -176,6 +205,7 @@
       <form id="editForm">
         <div class="field"><label for="eCode">รหัสร้านค้า</label><input type="text" id="eCode" value="${escapeHtml(s.code)}" required></div>
         <div class="field"><label for="eName">ชื่อร้านค้า</label><input type="text" id="eName" value="${escapeHtml(s.name)}" required></div>
+        <div class="field"><label for="eFloor">ชั้น</label><select id="eFloor">${floorOptions(s.floor || '')}</select></div>
         <div class="field"><label for="eActive">สถานะการใช้งาน</label>
           <select id="eActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
         <div class="btn-row mt-16">
@@ -189,6 +219,7 @@
       const payload = {
         code: $('#eCode', m).value.trim(),
         name: $('#eName', m).value.trim(),
+        floor: $('#eFloor', m).value || null,
         is_active: $('#eActive', m).value === 'true',
       };
       if (!payload.code || !payload.name) return toast('กรุณากรอกข้อมูลให้ครบ', 'warn');
@@ -202,19 +233,34 @@
 
   /* ---------- Bulk import ---------- */
   function parseBulk() {
+    const def = $('#bulkFloor').value || null;
+    const norm = (x) => String(x).replace(/^ชั้น\s*/, '').trim().toUpperCase();
+    const isFloor = (x) => FLOORS.map((f) => f.toUpperCase()).includes(norm(x));
     const rows = $('#bulkText').value.split(/\r?\n/)
-      .map((line) => line.split(/\t|,/).map((x) => x.trim()))
+      .map((line) => line.split(/\t|,/).map((x) => x.trim()).filter((x, i) => i < 2 || x))
       .filter(([code, ...rest]) => code && rest.join(' ').trim())
-      .map(([code, ...rest]) => ({ code, name: rest.join(' ').trim(), is_active: true }));
+      .map(([code, ...rest]) => {
+        // คอลัมน์สุดท้ายเป็นชั้น ถ้าตรงกับรายชื่อชั้นใน config
+        let fl = def;
+        if (rest.length > 1 && isFloor(rest[rest.length - 1])) {
+          const n = norm(rest.pop());
+          fl = FLOORS.find((f) => f.toUpperCase() === n);
+        }
+        return { code, name: rest.join(' ').trim(), floor: fl, is_active: true };
+      });
     return [...new Map(rows.map((r) => [r.code, r])).values()];
   }
-  $('#bulkText').addEventListener('input', () => {
+  const bulkPreview = () => {
     const list = parseBulk();
     const existing = new Set(stores.map((s) => s.code));
     const upd = list.filter((r) => existing.has(r.code)).length;
+    const per = floorsOf(list).map((f) => `${floorLabel(f)} ${list.filter((r) => (r.floor || '') === f).length}`)
+      .filter((t) => !/ 0$/.test(t)).join(' · ');
     $('#bulkPreview').textContent = list.length
-      ? `พบ ${list.length} ร้าน (ใหม่ ${list.length - upd} · อัปเดตชื่อ ${upd})` : '';
-  });
+      ? `พบ ${list.length} ร้าน (ใหม่ ${list.length - upd} · อัปเดต ${upd}) — ${per}` : '';
+  };
+  $('#bulkText').addEventListener('input', bulkPreview);
+  $('#bulkFloor').addEventListener('change', bulkPreview);
   $('#bulkGo').addEventListener('click', async () => {
     const unique = parseBulk();
     if (!unique.length) return toast('ไม่พบข้อมูลที่ถูกต้อง', 'warn');
@@ -238,6 +284,6 @@
     db.auth.onAuthStateChange((_evt, session) => setAdmin(session));
     loadStores();
   } else {
-    $('#storeTbody').innerHTML = '<tr><td colspan="4" class="empty">ยังไม่ได้เชื่อมต่อฐานข้อมูล</td></tr>';
+    $('#storeTbody').innerHTML = '<tr><td colspan="5" class="empty">ยังไม่ได้เชื่อมต่อฐานข้อมูล</td></tr>';
   }
 })();

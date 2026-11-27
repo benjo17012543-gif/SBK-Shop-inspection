@@ -19,6 +19,38 @@ const METHODS = ['หยอดเจล', 'วางกรงดักหนู'
 const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
+/* ---------- ชั้น (Floor) ---------- */
+const FLOORS = (Array.isArray(CFG.FLOORS) && CFG.FLOORS.length ? CFG.FLOORS : ['B', '1', '2', '3', '4', '5']).map(String);
+const floorLabel = (f) => (f ? `ชั้น ${f}` : 'ไม่ระบุชั้น');
+const floorRank = (f) => { const i = FLOORS.indexOf(f || ''); return i < 0 ? (f ? 900 : 999) : i; };
+/** เรียงร้าน: ตามชั้น แล้วตามรหัส */
+const byFloorCode = (a, b) => floorRank(a.floor) - floorRank(b.floor) ||
+  String(a.code).localeCompare(String(b.code), 'th', { numeric: true });
+const floorBadge = (f) => `<span class="badge badge-floor${f ? '' : ' none'}">${escapeHtml(floorLabel(f))}</span>`;
+/** ชั้นทั้งหมดที่มีอยู่จริง (ตาม config + ชั้นอื่นที่พบในข้อมูล) */
+function floorsOf(stores) {
+  const extra = [...new Set(stores.map((s) => s.floor).filter((f) => f && !FLOORS.includes(f)))].sort();
+  const hasNone = stores.some((s) => !s.floor);
+  return [...FLOORS, ...extra, ...(hasNone ? [''] : [])];
+}
+/**
+ * แถบปุ่มเลือกชั้น
+ * @param {HTMLElement} el
+ * @param {{stores:any[], value:string, onChange:(v:string)=>void, countFn?:(stores:any[])=>string}} o
+ *   value: 'all' | ชั้น | '' (ไม่ระบุชั้น)
+ */
+function renderFloorChips(el, { stores, value, onChange, countFn }) {
+  const count = countFn || ((list) => String(list.length));
+  const opts = [['all', 'ทุกชั้น', stores], ...floorsOf(stores).map((f) => [f, f ? `ชั้น ${f}` : 'ไม่ระบุ', stores.filter((s) => (s.floor || '') === f)])];
+  el.innerHTML = opts.map(([v, label, list]) =>
+    `<button type="button" class="chip floor-chip ${v === value ? 'active' : ''}" data-floor="${escapeHtml(v)}">${escapeHtml(label)} <span class="n">${count(list)}</span></button>`).join('');
+  el.onclick = (e) => {
+    const c = e.target.closest('[data-floor]');
+    if (c) onChange(c.dataset.floor);
+  };
+}
+const floorMatch = (value, f) => value === 'all' || (f || '') === value;
+
 const hasRat = (p) => p === 'หนู' || p === 'หนู-แมลงสาบ';
 const hasRoach = (p) => p === 'แมลงสาบ' || p === 'หนู-แมลงสาบ';
 
@@ -166,6 +198,9 @@ function errMsg(err) {
   if (err.code === '42501' || /row-level security/i.test(err.message || '')) return 'ไม่มีสิทธิ์ทำรายการนี้ (กรุณาล็อกอิน Admin)';
   if (/Failed to fetch|NetworkError/i.test(err.message || '')) return 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ กรุณาลองใหม่';
   if (/Invalid login credentials/i.test(err.message || '')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  if (/(store_)?floor/i.test(err.message || '') && /column|schema cache/i.test(err.message || '')) {
+    return 'ฐานข้อมูลยังไม่มีคอลัมน์ "ชั้น" — กรุณารันไฟล์ supabase/update-add-floor.sql ใน Supabase SQL Editor';
+  }
   return err.message || String(err);
 }
 

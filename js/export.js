@@ -14,6 +14,7 @@ const ReportExporter = (() => {
       'เวลา': fmtTime(i.inspected_at),
       'รหัสร้านค้า': i.store_code || '',
       'ชื่อร้านค้า': i.store_name || '',
+      'ชั้น': i.floor || '',
       'ปัญหาที่พบ': i.problem,
       'วิธีแก้ไข': i.solution_method || '',
       'รายละเอียดวิธีแก้ไข': i.solution_detail || '',
@@ -74,27 +75,40 @@ const ReportExporter = (() => {
     ws1['!cols'] = [{ wch: 32 }, { wch: 14 }, { wch: 18 }];
     XLSX.utils.book_append_sheet(wb, ws1, 'สรุป');
 
+    const wsF = XLSX.utils.json_to_sheet(r.floors.map((f) => ({
+      'ชั้น': floorLabel(f.floor),
+      'ร้านทั้งหมด': f.total,
+      'ตรวจแล้ว': f.done,
+      'ยังไม่ได้ตรวจ': f.todo,
+      'ความคืบหน้า (%)': f.pct,
+      'พบหนู (ร้าน)': f.rat,
+      'พบแมลงสาบ (ร้าน)': f.roach,
+    })));
+    wsF['!cols'] = [14, 12, 10, 14, 16, 14, 18].map((wch) => ({ wch }));
+    XLSX.utils.book_append_sheet(wb, wsF, 'สรุปรายชั้น');
+
     const ws2 = XLSX.utils.json_to_sheet(recordRows(r));
-    ws2['!cols'] = [6, 14, 8, 12, 28, 14, 18, 36, 30, 20, 9, 50, 50].map((wch) => ({ wch }));
+    ws2['!cols'] = [6, 14, 8, 12, 28, 8, 14, 18, 36, 30, 20, 9, 50, 50].map((wch) => ({ wch }));
     XLSX.utils.book_append_sheet(wb, ws2, 'บันทึกการตรวจ');
 
     const ws3 = XLSX.utils.json_to_sheet(r.inspected.map((s, n) => ({
       'ลำดับ': n + 1,
       'รหัสร้านค้า': s.code,
       'ชื่อร้านค้า': s.name,
+      'ชั้น': s.floor || '',
       'จำนวนครั้งที่ตรวจ': s.inspections.length,
       'ตรวจล่าสุด': fmtDateTime(s.last.inspected_at),
       'ผลล่าสุด': s.last.problem,
       'พบหนู (ในเดือน)': s.rat ? 'พบ' : 'ไม่พบ',
       'พบแมลงสาบ (ในเดือน)': s.roach ? 'พบ' : 'ไม่พบ',
     })));
-    ws3['!cols'] = [6, 12, 30, 14, 22, 14, 14, 18].map((wch) => ({ wch }));
+    ws3['!cols'] = [6, 12, 30, 8, 14, 22, 14, 14, 18].map((wch) => ({ wch }));
     XLSX.utils.book_append_sheet(wb, ws3, 'ร้านที่ตรวจแล้ว');
 
     const ws4 = XLSX.utils.json_to_sheet(r.notInspected.map((s, n) => ({
-      'ลำดับ': n + 1, 'รหัสร้านค้า': s.code, 'ชื่อร้านค้า': s.name,
+      'ลำดับ': n + 1, 'รหัสร้านค้า': s.code, 'ชื่อร้านค้า': s.name, 'ชั้น': s.floor || '',
     })));
-    ws4['!cols'] = [6, 12, 34].map((wch) => ({ wch }));
+    ws4['!cols'] = [6, 12, 34, 8].map((wch) => ({ wch }));
     XLSX.utils.book_append_sheet(wb, ws4, 'ร้านที่ยังไม่ได้ตรวจ');
 
     XLSX.writeFile(wb, `${fileBase(r)}.xlsx`);
@@ -126,18 +140,25 @@ const ReportExporter = (() => {
         </tbody>
       </table>
 
+      <h2>สรุปรายชั้น</h2>
+      <table class="avoid-break">
+        <thead><tr><th>ชั้น</th><th>ร้านทั้งหมด</th><th>ตรวจแล้ว</th><th>ยังไม่ตรวจ</th><th>ความคืบหน้า</th><th>พบหนู</th><th>พบแมลงสาบ</th></tr></thead>
+        <tbody>${r.floors.map((f) => `<tr><td>${e(floorLabel(f.floor))}</td><td>${f.total}</td><td>${f.done}</td><td>${f.todo}</td><td>${f.pct}%</td><td>${f.rat}</td><td>${f.roach}</td></tr>`).join('')}
+          <tr><th>รวม</th><th>${r.totalActive}</th><th>${r.inspected.length}</th><th>${r.notInspected.length}</th><th>${r.pct}%</th><th>${r.ratStores.length}</th><th>${r.roachStores.length}</th></tr></tbody>
+      </table>
+
       <h2>3. รายชื่อร้านค้าที่ตรวจแล้ว (${r.inspected.length} ร้าน)</h2>
       ${r.inspected.length ? `<table>
-        <thead><tr><th>#</th><th>รหัส</th><th>ชื่อร้านค้า</th><th>ครั้ง</th><th>ตรวจล่าสุด</th><th>หนู</th><th>แมลงสาบ</th></tr></thead>
-        <tbody>${r.inspected.map((s, n) => `<tr><td>${n + 1}</td><td>${e(s.code)}</td><td>${e(s.name)}</td>
+        <thead><tr><th>#</th><th>รหัส</th><th>ชื่อร้านค้า</th><th>ชั้น</th><th>ครั้ง</th><th>ตรวจล่าสุด</th><th>หนู</th><th>แมลงสาบ</th></tr></thead>
+        <tbody>${r.inspected.map((s, n) => `<tr><td>${n + 1}</td><td>${e(s.code)}</td><td>${e(s.name)}</td><td>${e(s.floor || '-')}</td>
           <td>${s.inspections.length}</td><td>${fmtDateTime(s.last.inspected_at)}</td>
           <td>${s.rat ? 'พบ' : '-'}</td><td>${s.roach ? 'พบ' : '-'}</td></tr>`).join('')}</tbody>
       </table>` : '<p>- ไม่มี -</p>'}
 
       <h2>4. รายชื่อร้านค้าที่ยังไม่ได้ตรวจ (${r.notInspected.length} ร้าน)</h2>
       ${r.notInspected.length ? `<table>
-        <thead><tr><th style="width:40px">#</th><th style="width:110px">รหัส</th><th>ชื่อร้านค้า</th></tr></thead>
-        <tbody>${r.notInspected.map((s, n) => `<tr><td>${n + 1}</td><td>${e(s.code)}</td><td>${e(s.name)}</td></tr>`).join('')}</tbody>
+        <thead><tr><th style="width:40px">#</th><th style="width:110px">รหัส</th><th>ชื่อร้านค้า</th><th style="width:80px">ชั้น</th></tr></thead>
+        <tbody>${r.notInspected.map((s, n) => `<tr><td>${n + 1}</td><td>${e(s.code)}</td><td>${e(s.name)}</td><td>${e(s.floor || '-')}</td></tr>`).join('')}</tbody>
       </table>` : '<p>- ตรวจครบทุกร้าน -</p>'}
 
       <h2>5. รายละเอียดบันทึกการตรวจ (${r.inspections.length} ครั้ง)</h2>
@@ -145,7 +166,7 @@ const ReportExporter = (() => {
         <thead><tr><th>วันที่/เวลา</th><th>ร้านค้า</th><th>ปัญหา</th><th>วิธีแก้ไข / รายละเอียด</th><th>ผู้ตรวจ</th></tr></thead>
         <tbody>${r.inspections.map((i) => `<tr>
           <td style="white-space:nowrap">${fmtDate(i.inspected_at)}<br>${fmtTime(i.inspected_at)}</td>
-          <td>${e(i.store_name)}<br><small>${e(i.store_code || '')}</small></td>
+          <td>${e(i.store_name)}<br><small>${e(i.store_code || '')}${i.floor ? ` · ชั้น ${e(i.floor)}` : ''}</small></td>
           <td>${e(i.problem)}</td>
           <td>${e(i.solution_method || '-')}${i.solution_detail ? `<br><small>${e(i.solution_detail)}</small>` : ''}${i.note ? `<br><small>หมายเหตุ: ${e(i.note)}</small>` : ''}</td>
           <td>${e(i.inspector_name || '-')}</td></tr>`).join('')}</tbody>
