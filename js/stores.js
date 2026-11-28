@@ -204,20 +204,62 @@ function parseCsv(text) {
   return rows.filter((r) => r.some((c) => c.trim()));
 }
 
+/** อ่านไฟล์ได้ทั้ง UTF-8 และภาษาไทยแบบเก่า (TIS-620 / Windows-874 ที่ Excel บันทึก) */
+function decodeText(buf) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { /* not UTF-8 */ }
+  return new TextDecoder('windows-874').decode(buf);
+}
+
+const cleanName = (s) => String(s || '').replace(/\b([Cc])af\?/g, '$1afé').replace(/\s+/g, ' ').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').trim();
+
+/** รูปแบบ 1: store_code,store_name[,is_active] */
+function fromCodeFormat(rows) {
+  if (rows.length && !CODE_RE.test(rows[0][0].trim())) rows = rows.slice(1); // ข้ามหัวตาราง
+  return rows.map((r) => ({
+    store_code: (r[0] || '').trim().toUpperCase(),
+    store_name: cleanName(r[1]),
+    is_active: !/^(false|0|inactive|n|no)$/i.test((r[2] || '').trim()),
+  }));
+}
+
+/** รูปแบบ 2: ลำดับ,ชื่อร้านค้า,ชั้น (ไม่มีรหัสร้าน) → สร้างรหัสอัตโนมัติ เช่น B-001, 3-012 */
+function isFloorFormat(rows) {
+  if (!rows.length) return false;
+  if (rows[0].some((c) => c.includes('ชั้น'))) return true;
+  const sample = rows.slice(0, 20);
+  return sample.every((r) => /^\d+$/.test((r[0] || '').trim()) && FLOORS.includes((r[2] || '').trim().toUpperCase()));
+}
+
+function fromFloorFormat(rows) {
+  if (rows[0].some((c) => c.includes('ชั้น') || c.includes('ชื่อ'))) rows = rows.slice(1);
+  // ร้านที่มีอยู่แล้ว (ชื่อ+ชั้นเดียวกัน) ใช้รหัสเดิม → นำเข้าซ้ำได้โดยไม่เกิดร้านซ้ำ
+  const existing = new Map(state.stores.map((s) => [`${getFloor(s.store_code)}|${s.store_name}`, s.store_code]));
+  const next = {};
+  state.stores.forEach((s) => {
+    const m = /^([B0-9])-(\d+)$/i.exec(s.store_code);
+    if (m) next[m[1].toUpperCase()] = Math.max(next[m[1].toUpperCase()] || 0, Number(m[2]));
+  });
+  return rows.map((r) => {
+    const floor = (r[2] || '').trim().toUpperCase();
+    const name = cleanName(r[1]);
+    let code = existing.get(`${floor}|${name}`);
+    if (!code && FLOORS.includes(floor)) {
+      next[floor] = (next[floor] || 0) + 1;
+      code = `${floor}-${String(next[floor]).padStart(3, '0')}`;
+    }
+    return { store_code: code || '', store_name: name, is_active: true };
+  });
+}
+
 $('importCsv').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file || !(await requireAdmin())) return;
-  const rows = parseCsv((await file.text()).replace(/^﻿/, ''));
-  if (rows.length && !CODE_RE.test(rows[0][0].trim())) rows.shift(); // ข้ามหัวตาราง
-  const items = rows.map((r) => ({
-    store_code: (r[0] || '').trim().toUpperCase(),
-    store_name: (r[1] || '').trim(),
-    is_active: !/^(false|0|inactive|n|no)$/i.test((r[2] || '').trim()),
-  }));
+  const rows = parseCsv(decodeText(await file.arrayBuffer()).replace(/^﻿/, ''));
+  const items = isFloorFormat(rows) ? fromFloorFormat(rows) : fromCodeFormat(rows);
   const valid = items.filter((i) => CODE_RE.test(i.store_code) && i.store_name);
   const invalid = items.length - valid.length;
-  if (!valid.length) { toast('ไม่พบข้อมูลที่ถูกต้องในไฟล์ (รูปแบบ: รหัสร้าน,ชื่อร้าน)', 'error'); return; }
+  if (!valid.length) { toast('ไม่พบข้อมูลที่ถูกต้องในไฟล์ (รูปแบบ: รหัสร้าน,ชื่อร้าน หรือ ลำดับ,ชื่อร้านค้า,ชั้น)', 'error'); return; }
   if (!(await confirmDialog(`นำเข้า/อัปเดต ${valid.length} ร้าน${invalid ? ` (ข้าม ${invalid} แถวที่ไม่ถูกต้อง)` : ''} ใช่หรือไม่?`, 'นำเข้า', false))) return;
   const { error } = await sb.from('stores').upsert(valid, { onConflict: 'store_code' });
   if (error) { toast(`นำเข้าไม่สำเร็จ: ${error.message}`, 'error'); return; }

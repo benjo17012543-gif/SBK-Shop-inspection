@@ -13,12 +13,12 @@ create table if not exists public.stores (
   id          uuid primary key default gen_random_uuid(),
   store_code  text not null unique,
   store_name  text not null,
-  -- ชั้น = อักษรตัวแรกของรหัสร้าน (B, 1, 2, 3, 4, 5)
+  -- ชั้น = อักษรตัวแรกของรหัสร้าน (B, 1-6)
   floor       text generated always as (upper(substr(store_code, 1, 1))) stored,
   is_active   boolean not null default true,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
-  constraint stores_code_floor_chk check (store_code ~* '^[B1-5]')
+  constraint stores_code_floor_chk check (store_code ~* '^[B1-6]')
 );
 create index if not exists stores_floor_idx on public.stores (floor);
 
@@ -116,18 +116,7 @@ create policy "inspection images delete" on storage.objects
   for delete to authenticated using (bucket_id = 'inspection-images');
 
 -- ---------------------------------------------------------------------
--- ข้อมูลตัวอย่าง (ลบส่วนนี้ได้หากไม่ต้องการ)
+-- ข้อมูลร้านค้า: นำเข้าไฟล์ supabase/stores-import.csv
+--   (Table Editor → stores → Insert → Import data from CSV)
+--   หรือใช้ปุ่ม "นำเข้า CSV" ในหน้า stores.html
 -- ---------------------------------------------------------------------
-insert into public.stores (store_code, store_name) values
-  ('B01', 'ซูเปอร์มาร์เก็ต'),      ('B02', 'ร้านเบเกอรี่ชั้นใต้ดิน'), ('B03', 'ฟู้ดคอร์ท โซน A'),
-  ('B04', 'ฟู้ดคอร์ท โซน B'),     ('B05', 'ร้านผลไม้สด'),            ('B06', 'ร้านข้าวมันไก่'),
-  ('B07', 'ร้านก๋วยเตี๋ยวเรือ'),   ('B08', 'ร้านชานมไข่มุก'),         ('B09', 'ร้านข้าวแกง'),
-  ('B10', 'ร้านติ่มซำ'),           ('B11', 'ร้านน้ำผลไม้ปั่น'),
-  ('101', 'ร้านกาแฟ The Bean'),    ('102', 'ร้านขนมหวาน'),            ('103', 'ร้านโดนัท'),
-  ('104', 'ร้านไอศกรีม'),          ('105', 'ร้านเครื่องสำอาง'),
-  ('201', 'ร้านอาหารญี่ปุ่น'),      ('202', 'ร้านชาบู'),               ('203', 'ร้านพิซซ่า'),
-  ('204', 'ร้านเสื้อผ้า'),
-  ('301', 'ร้านหมูกระทะ'),         ('302', 'ร้านอาหารเกาหลี'),        ('303', 'ร้านสเต๊ก'),
-  ('401', 'โรงภาพยนตร์ - ป๊อปคอร์น'), ('402', 'ร้านเกม'),
-  ('501', 'ร้านอาหารบุฟเฟต์'),     ('502', 'ร้านบาร์บีคิว')
-on conflict (store_code) do nothing;

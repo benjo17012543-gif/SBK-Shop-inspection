@@ -11,8 +11,8 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_Ji9G34XqBU8-zHAyRRevQQ_IIWtUuUz
  * ------------------------------------------------------------------- */
 export const STORAGE_BUCKET = 'inspection-images';
 
-/** ชั้นของร้านค้า — ใช้อักษรตัวแรกของรหัสร้านเป็นชั้น */
-export const FLOORS = ['B', '1', '2', '3', '4', '5'];
+/** ชั้นของร้านค้า — ใช้อักษรตัวแรกของรหัสร้านเป็นชั้น (เพิ่ม/ลดได้) */
+export const FLOORS = ['B', '1', '2', '3', '4', '5', '6'];
 
 /** จำนวนร้านต่อหน้า (การแบ่งหน้า) */
 export const PAGE_SIZE = 10;
