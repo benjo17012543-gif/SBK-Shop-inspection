@@ -395,9 +395,9 @@ textarea.input { resize: vertical; min-height: 84px; }
 #sortBtn { white-space: nowrap; }
 
 /* ================= Store search (index) ================= */
-.search-hint { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
-  padding: 22px 12px; color: var(--muted); border: 1.5px dashed var(--border); border-radius: var(--radius-sm); background: #f8fafc; }
-.search-hint b { color: var(--primary); }
+.search-hint { grid-column: 1 / -1; display: block; text-align: center; font-size: .9rem;
+  padding: 10px 12px; color: var(--muted); border: 1.5px dashed var(--border); border-radius: var(--radius-sm); background: #f8fafc; }
+.search-hint .small { display: block; margin-top: 2px; }
 
 /* ================= Splash (หน้าต้อนรับ) ================= */
 .splash { position: fixed; inset: 0; z-index: 500; overflow-y: auto; display: flex; justify-content: center;
