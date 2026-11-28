@@ -16,12 +16,47 @@ export function getFloor(code) {
 
 export const floorLabel = (f) => (f === 'ALL' ? 'ทั้งหมด' : `ชั้น ${f}`);
 
-/** เรียงรหัสร้านแบบธรรมชาติ (B1, B2, B10 ...) โดยชั้น B มาก่อน */
-export function compareStores(a, b) {
-  const fa = FLOORS.indexOf(getFloor(a.store_code));
-  const fb = FLOORS.indexOf(getFloor(b.store_code));
-  if (fa !== fb) return fa - fb;
-  return String(a.store_code).localeCompare(String(b.store_code), 'th', { numeric: true });
+/** ลำดับชั้นตามทิศทาง: 'asc' = B → 6, 'desc' = 6 → B */
+export const floorsInOrder = (dir = 'asc') => (dir === 'desc' ? [...FLOORS].reverse() : [...FLOORS]);
+
+/** เรียงร้าน: ตามชั้น (B→6 หรือ 6→B) แล้วตามชื่อร้าน */
+export function compareStores(a, b, dir = 'asc') {
+  const d = FLOORS.indexOf(getFloor(a.store_code)) - FLOORS.indexOf(getFloor(b.store_code));
+  if (d) return dir === 'desc' ? -d : d;
+  return String(a.store_name).localeCompare(String(b.store_name), 'th', { numeric: true })
+    || String(a.store_code).localeCompare(String(b.store_code), 'th', { numeric: true });
+}
+
+/** สร้างรหัสร้านแบบสุ่ม: <ชั้น>-<เลขสุ่ม 3 หลัก> เช่น B-472, 3-058 (ไม่ซ้ำกับ existing) */
+export function randomStoreCode(floor, existing = new Set()) {
+  const taken = new Set([...existing].map((c) => String(c).toUpperCase()));
+  const free = [];
+  for (let n = 1; n <= 999; n++) {
+    const code = `${floor}-${String(n).padStart(3, '0')}`;
+    if (!taken.has(code)) free.push(code);
+  }
+  if (!free.length) throw new Error(`รหัสของชั้น ${floor} เต็มแล้ว (999 ร้าน)`);
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return free[buf[0] % free.length];
+}
+
+/** ปุ่มสลับการเรียงชั้น (จำค่าไว้ในเครื่อง) */
+export function initSortToggle(btn, onChange, key = 'floorSort') {
+  let dir = 'asc';
+  try { dir = localStorage.getItem(key) === 'desc' ? 'desc' : 'asc'; } catch { /* ignore */ }
+  const paint = () => {
+    btn.innerHTML = `⇅ ชั้น ${dir === 'asc' ? 'B → 6' : '6 → B'}`;
+    btn.setAttribute('aria-label', `เรียงชั้นจาก ${dir === 'asc' ? 'B ไป 6' : '6 ไป B'} (กดเพื่อสลับ)`);
+  };
+  paint();
+  btn.addEventListener('click', () => {
+    dir = dir === 'asc' ? 'desc' : 'asc';
+    try { localStorage.setItem(key, dir); } catch { /* ignore */ }
+    paint();
+    onChange(dir);
+  });
+  return dir;
 }
 
 /** problem มีศัตรูพืชชนิดนั้นหรือไม่ ('หนู' | 'แมลงสาบ') */
@@ -95,8 +130,9 @@ export function renderPagination(el, { page, totalPages, total }, onChange) {
 }
 
 /** แท็บชั้น: counts = { B: 10, '1': 4, ... } */
-export function renderFloorTabs(el, counts, active, onChange, { includeAll = false } = {}) {
-  const keys = includeAll ? ['ALL', ...FLOORS] : FLOORS;
+export function renderFloorTabs(el, counts, active, onChange, { includeAll = false, dir = 'asc' } = {}) {
+  const floors = floorsInOrder(dir);
+  const keys = includeAll ? ['ALL', ...floors] : floors;
   el.innerHTML = keys.map((f) => {
     const n = f === 'ALL' ? Object.values(counts).reduce((a, b) => a + b, 0) : (counts[f] || 0);
     return `<button type="button" role="tab" class="floor-tab ${f === active ? 'active' : ''}" data-f="${f}"
@@ -195,7 +231,15 @@ const NAV = [
   { key: 'stores', href: 'stores.html', icon: '🏪', label: 'จัดการร้านค้า' },
 ];
 
-export function initLayout(active) {
+/**
+ * minimal = true → หน้าสำหรับพนักงาน (User): ไม่มีแถบด้านบนและเมนูสลับหน้า
+ */
+export function initLayout(active, { minimal = false } = {}) {
+  if (minimal) {
+    document.body.classList.add('minimal');
+    addConfigBanner((b) => document.body.prepend(b));
+    return;
+  }
   const links = (cls) => NAV.map((n) => `
     <a href="${n.href}" class="${cls} ${n.key === active ? 'active' : ''}" ${n.key === active ? 'aria-current="page"' : ''}>
       <span class="nav-icon" aria-hidden="true">${n.icon}</span><span>${n.label}</span>
@@ -217,15 +261,15 @@ export function initLayout(active) {
   bottom.innerHTML = links('bottomnav-link');
   document.body.appendChild(bottom);
 
-  if (!isConfigured) {
-    const b = document.createElement('div');
-    b.className = 'config-banner';
-    b.innerHTML = `⚠️ ยังไม่ได้ตั้งค่า Supabase — กรุณาแก้ไข <code>SUPABASE_URL</code> และ <code>SUPABASE_ANON_KEY</code> ในไฟล์ <code>js/config.js</code>`;
-    header.after(b);
-  } else if (!window.supabase) {
-    const b = document.createElement('div');
-    b.className = 'config-banner';
-    b.textContent = '⚠️ โหลดไลบรารี Supabase ไม่สำเร็จ — ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
-    header.after(b);
-  }
+  addConfigBanner((b) => header.after(b));
+}
+
+function addConfigBanner(insert) {
+  if (isConfigured && window.supabase) return;
+  const b = document.createElement('div');
+  b.className = 'config-banner';
+  b.innerHTML = !isConfigured
+    ? '⚠️ ยังไม่ได้ตั้งค่า Supabase — กรุณาแก้ไข <code>SUPABASE_URL</code> และ <code>SUPABASE_ANON_KEY</code> ในไฟล์ <code>js/config.js</code>'
+    : '⚠️ โหลดไลบรารี Supabase ไม่สำเร็จ — ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
+  insert(b);
 }

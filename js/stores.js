@@ -2,13 +2,15 @@ import { FLOORS } from './config.js';
 import { sb, getSession, signIn, renderAuthChip } from './supabase-client.js';
 import {
   initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination, renderFloorTabs,
-  toast, setBusy, openModal, confirmDialog,
+  toast, setBusy, openModal, confirmDialog, randomStoreCode, initSortToggle,
 } from './utils.js';
 
 initLayout('stores');
 
 const $ = (id) => document.getElementById(id);
-const state = { stores: [], floor: 'ALL', search: '', status: 'all', page: 1 };
+const state = { stores: [], floor: 'ALL', search: '', status: 'all', page: 1, dir: 'asc' };
+const sortStores = () => state.stores.sort((a, b) => compareStores(a, b, state.dir));
+state.dir = initSortToggle($('sortBtn'), (dir) => { state.dir = dir; sortStores(); state.page = 1; render(); });
 
 /* ================= Auth ================= */
 async function boot() {
@@ -47,7 +49,8 @@ async function loadStores() {
   $('table').innerHTML = '<div class="empty"><span class="spinner dark"></span> กำลังโหลด...</div>';
   const { data, error } = await sb.from('stores').select('*').order('store_code');
   if (error) { toast(`โหลดข้อมูลไม่สำเร็จ: ${error.message}`, 'error'); return; }
-  state.stores = data.sort(compareStores);
+  state.stores = data;
+  sortStores();
   render();
 }
 
@@ -58,7 +61,7 @@ function render() {
 
   const counts = {};
   base.forEach((s) => { const f = getFloor(s.store_code); counts[f] = (counts[f] || 0) + 1; });
-  renderFloorTabs($('floorTabs'), counts, state.floor, (f) => { state.floor = f; state.page = 1; render(); }, { includeAll: true });
+  renderFloorTabs($('floorTabs'), counts, state.floor, (f) => { state.floor = f; state.page = 1; render(); }, { includeAll: true, dir: state.dir });
 
   const rows = base.filter((s) => state.floor === 'ALL' || getFloor(s.store_code) === state.floor);
   const pg = paginate(rows, state.page);
@@ -99,50 +102,68 @@ function render() {
 /* ================= เพิ่ม / แก้ไข ================= */
 const CODE_RE = new RegExp(`^[${FLOORS.join('')}]`, 'i');
 
+const existingCodes = (exceptId) => new Set(state.stores.filter((s) => s.id !== exceptId).map((s) => s.store_code));
+
+/** เพิ่ม/แก้ไขร้าน: เลือกชั้นจาก Dropdown + พิมพ์ชื่อร้าน → รหัสร้าน = <ชั้น>-<เลขสุ่ม 3 หลัก> */
 function openForm(store = null) {
+  const curFloor = store ? getFloor(store.store_code) : (state.floor !== 'ALL' ? state.floor : FLOORS[0]);
   const m = openModal({
     title: store ? 'แก้ไขร้านค้า' : 'เพิ่มร้านค้า',
     body: `<form id="storeForm" novalidate>
-      <label class="label" for="fCode">รหัสร้านค้า <span class="req">*</span></label>
-      <input id="fCode" class="input" required maxlength="20" value="${escapeHtml(store?.store_code || '')}" placeholder="เช่น B01, 1A05, 3-12">
-      <p class="hint">อักษรตัวแรกคือชั้น: ${FLOORS.join(', ')} <span id="floorPreview" class="tag"></span></p>
+      <label class="label" for="fFloor">ชั้น <span class="req">*</span></label>
+      <select id="fFloor" class="input">
+        ${FLOORS.map((f) => `<option value="${f}" ${f === curFloor ? 'selected' : ''}>ชั้น ${f}</option>`).join('')}
+      </select>
       <label class="label" for="fName">ชื่อร้านค้า <span class="req">*</span></label>
-      <input id="fName" class="input" required maxlength="120" value="${escapeHtml(store?.store_name || '')}">
+      <input id="fName" class="input" required maxlength="120" value="${escapeHtml(store?.store_name || '')}" placeholder="พิมพ์ชื่อร้านค้า">
+      <label class="label">รหัสร้านค้า (สร้างอัตโนมัติ)</label>
+      <div class="code-preview">
+        <span class="store-code big" id="fCode"></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="reroll">🎲 สุ่มใหม่</button>
+      </div>
+      <p class="hint">รูปแบบ: ชั้น-เลขสุ่ม 3 หลัก (ไม่ซ้ำกับร้านอื่น)</p>
       <label class="checkbox mt"><input type="checkbox" id="fActive" ${store?.is_active === false ? '' : 'checked'}> เปิดใช้งาน (Active)</label>
     </form>`,
     footer: `<button type="button" class="btn btn-ghost" data-close>ยกเลิก</button>
              <button type="submit" form="storeForm" class="btn btn-primary" id="saveStore">💾 บันทึก</button>`,
   });
-  const code = m.el.querySelector('#fCode');
-  const preview = () => {
-    const f = getFloor(code.value);
-    m.el.querySelector('#floorPreview').textContent = code.value ? (f === '?' ? 'รหัสไม่ถูกต้อง' : `→ ชั้น ${f}`) : '';
+  const floorSel = m.el.querySelector('#fFloor');
+  const codeEl = m.el.querySelector('#fCode');
+  const name = m.el.querySelector('#fName');
+  let code = store?.store_code || '';
+  const roll = () => {
+    try { code = randomStoreCode(floorSel.value, existingCodes(store?.id)); } catch (err) { code = ''; toast(err.message, 'error'); }
+    codeEl.textContent = code || '—';
   };
-  code.addEventListener('input', preview);
-  preview();
-  setTimeout(() => code.focus(), 50);
+  // แก้ไข: คงรหัสเดิมถ้ายังอยู่ชั้นเดิม ; เปลี่ยนชั้น → สุ่มรหัสใหม่ในชั้นนั้น
+  floorSel.addEventListener('change', () => {
+    if (store && floorSel.value === getFloor(store.store_code)) { code = store.store_code; codeEl.textContent = code; } else roll();
+  });
+  m.el.querySelector('#reroll').addEventListener('click', roll);
+  if (store) codeEl.textContent = code; else roll();
+  setTimeout(() => name.focus(), 50);
 
   m.el.querySelector('#storeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const payload = {
-      store_code: code.value.trim().toUpperCase(),
-      store_name: m.el.querySelector('#fName').value.trim(),
-      is_active: m.el.querySelector('#fActive').checked,
-    };
-    if (!CODE_RE.test(payload.store_code)) { toast(`รหัสร้านต้องขึ้นต้นด้วย ${FLOORS.join(', ')}`, 'warn'); return; }
-    if (!payload.store_name) { toast('กรุณากรอกชื่อร้านค้า', 'warn'); return; }
-    if (state.stores.some((s) => s.store_code.toUpperCase() === payload.store_code && s.id !== store?.id)) {
-      toast('รหัสร้านนี้มีอยู่แล้ว', 'warn'); return;
-    }
+    const payload = { store_code: code, store_name: name.value.replace(/\s+/g, ' ').trim(), is_active: m.el.querySelector('#fActive').checked };
+    if (!payload.store_name) { toast('กรุณากรอกชื่อร้านค้า', 'warn'); name.focus(); return; }
+    if (!payload.store_code) return;
+    const dup = state.stores.find((s) => s.id !== store?.id && getFloor(s.store_code) === floorSel.value
+      && s.store_name.toLowerCase() === payload.store_name.toLowerCase());
+    if (dup && !(await confirmDialog(`ชั้น ${floorSel.value} มีร้าน "${dup.store_name}" (${dup.store_code}) อยู่แล้ว ต้องการบันทึกซ้ำหรือไม่?`, 'บันทึก', false))) return;
     if (!(await requireAdmin())) return;
     const btn = m.el.querySelector('#saveStore');
     setBusy(btn, true, 'กำลังบันทึก...');
-    const { error } = store
+    let { error } = store
       ? await sb.from('stores').update(payload).eq('id', store.id)
       : await sb.from('stores').insert(payload);
+    if (error?.code === '23505' && payload.store_code !== store?.store_code) { // รหัสชนกับร้านที่เพิ่งเพิ่มจากเครื่องอื่น → สุ่มใหม่ 1 ครั้ง
+      roll(); payload.store_code = code;
+      ({ error } = store ? await sb.from('stores').update(payload).eq('id', store.id) : await sb.from('stores').insert(payload));
+    }
     setBusy(btn, false);
     if (error) { toast(`บันทึกไม่สำเร็จ: ${error.message}`, 'error'); return; }
-    toast(store ? 'แก้ไขร้านค้าเรียบร้อย' : 'เพิ่มร้านค้าเรียบร้อย', 'success');
+    toast(`${store ? 'แก้ไข' : 'เพิ่ม'}ร้าน ${payload.store_code} เรียบร้อย`, 'success');
     m.close();
     loadStores();
   });
@@ -234,19 +255,16 @@ function fromFloorFormat(rows) {
   if (rows[0].some((c) => c.includes('ชั้น') || c.includes('ชื่อ'))) rows = rows.slice(1);
   // ร้านที่มีอยู่แล้ว (ชื่อ+ชั้นเดียวกัน) ใช้รหัสเดิม → นำเข้าซ้ำได้โดยไม่เกิดร้านซ้ำ
   const existing = new Map(state.stores.map((s) => [`${getFloor(s.store_code)}|${s.store_name}`, s.store_code]));
-  const next = {};
-  state.stores.forEach((s) => {
-    const m = /^([B0-9])-(\d+)$/i.exec(s.store_code);
-    if (m) next[m[1].toUpperCase()] = Math.max(next[m[1].toUpperCase()] || 0, Number(m[2]));
-  });
+  const used = new Set(state.stores.map((s) => s.store_code));
   return rows.map((r) => {
     const floor = (r[2] || '').trim().toUpperCase();
     const name = cleanName(r[1]);
     let code = existing.get(`${floor}|${name}`);
     if (!code && FLOORS.includes(floor)) {
-      next[floor] = (next[floor] || 0) + 1;
-      code = `${floor}-${String(next[floor]).padStart(3, '0')}`;
+      code = randomStoreCode(floor, used); // รหัสสุ่ม 3 หลัก
+      existing.set(`${floor}|${name}`, code);
     }
+    if (code) used.add(code);
     return { store_code: code || '', store_name: name, is_active: true };
   });
 }

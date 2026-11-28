@@ -2,7 +2,7 @@ import {
   STORAGE_BUCKET, FLOORS, PROBLEM_OPTIONS, NO_PROBLEM, SOLUTION_OPTIONS, OTHER_SOLUTION,
   IMAGE_OPTIONS, MAX_PHOTOS,
 } from './config.js';
-import { sb, uploadBlob, renderAuthChip } from './supabase-client.js';
+import { sb, uploadBlob } from './supabase-client.js';
 import {
   initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination, renderFloorTabs,
   toast, setBusy, monthRange, monthKey, uuid, formatBytes, openLightbox,
@@ -10,8 +10,7 @@ import {
 import { compressImage } from './image-compress.js';
 import { SignaturePad } from './signature-pad.js';
 
-initLayout('inspect');
-renderAuthChip();
+initLayout('inspect', { minimal: true }); // หน้าพนักงาน: ไม่มีแถบเมนูด้านบน
 
 const $ = (id) => document.getElementById(id);
 const els = {

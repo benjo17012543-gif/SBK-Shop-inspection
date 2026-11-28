@@ -91,6 +91,11 @@ code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; font-s
   .auth-chip { display: none; }
 }
 
+/* หน้าพนักงาน (index) — ไม่มีแถบเมนู */
+body.minimal { padding-bottom: 16px; }
+body.minimal .submit-bar { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+body.minimal .toast-wrap { top: 12px; }
+
 /* ================= Card ================= */
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
 .card-title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -156,6 +161,8 @@ textarea.input { resize: vertical; min-height: 84px; }
 .store-item.active { border-color: var(--primary); background: var(--primary-100); }
 .store-item .store-name { flex: 1 1 120px; font-weight: 500; }
 .store-code { font-weight: 700; color: var(--primary); background: var(--primary-50); border-radius: 6px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+.code-preview { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px dashed var(--border); border-radius: var(--radius-sm); background: #f8fafc; }
+.store-code.big { font-size: 1.25rem; padding: 3px 12px; letter-spacing: .5px; }
 .selected-store { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
   background: var(--primary-50); border: 1.5px solid var(--primary-600); }
 .selected-name { font-size: 1.1rem; font-weight: 700; margin: 2px 0 4px; }
@@ -196,13 +203,48 @@ textarea.input { resize: vertical; min-height: 84px; }
 .submit-bar .btn { box-shadow: 0 8px 24px rgba(15,118,110,.35); }
 
 /* ================= Dashboard ================= */
-.toolbar-card { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
-.period-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; flex: 1 1 340px; }
-.period-picker .label { margin-top: 0; }
-.period-picker .btn { grid-column: 1 / -1; }
-@media (min-width: 560px) { .period-picker { grid-template-columns: 1fr 1fr auto; } .period-picker .btn { grid-column: auto; } }
-.export-box { flex: 1 1 280px; }
-.export-box .label { margin-top: 0; }
+/* ช่วงเวลา */
+.seg-tabs.period-modes { grid-template-columns: repeat(5, 1fr); }
+.period-modes .seg-tab { padding: 8px 4px; font-size: .9rem; white-space: nowrap; }
+.period-bar { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+.period-fields { display: flex; gap: 8px; flex: 1 1 260px; min-width: 0; }
+.period-fields .field { flex: 1 1 0; min-width: 0; }
+.period-fields .label { margin-top: 0; }
+.nav-arrow { font-size: 1.4rem; width: 46px; padding: 0; min-height: 46px; }
+.period-bar #viewBtn { min-height: 46px; }
+@media (max-width: 560px) {
+  .period-modes .seg-tab { font-size: .8rem; }
+  .period-bar { display: grid; grid-template-columns: 46px 1fr 46px; }
+  .period-fields { grid-column: 1 / -1; grid-row: 1; }
+  .period-bar #prevBtn { grid-column: 1; grid-row: 2; }
+  .period-bar #viewBtn { grid-column: 2; grid-row: 2; }
+  .period-bar #nextBtn { grid-column: 3; grid-row: 2; }
+  .m-hide { display: none; }
+}
+.export-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.export-row .label { margin: 0; }
+.export-row .btn-row { flex: 1 1 280px; }
+
+.stat-delta { font-size: .8rem; margin-top: 2px; min-height: 1.2em; }
+.delta { font-weight: 600; }
+.delta.good { color: #15803d; }
+.delta.bad { color: #b91c1c; }
+.delta.flat { color: var(--muted); font-weight: 500; }
+.pest-card .stat-delta { margin-top: 4px; }
+
+/* กราฟ */
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.chart-head .card-title { margin-bottom: 8px; }
+.chart-box { position: relative; height: 280px; }
+.chart-box.tall { height: 320px; }
+.chart-grid { display: grid; grid-template-columns: 1fr; gap: 0 14px; }
+@media (min-width: 900px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
+.mt0 { margin-top: -6px; margin-bottom: 8px; }
+.table-view { margin-top: 10px; }
+.table-view summary { cursor: pointer; color: var(--primary); font-weight: 600; font-size: .9rem; padding: 4px 0; }
+.table-scroll { max-height: 320px; overflow: auto; margin-top: 6px; }
+.table-scroll .table { font-size: .88rem; }
+
 .btn-export { background: #fff; border-color: var(--border); color: var(--text); }
 .btn-export.pdf:hover { border-color: #dc2626; background: #fef2f2; }
 .btn-export.xlsx:hover { border-color: #16a34a; background: #f0fdf4; }
@@ -252,9 +294,11 @@ textarea.input { resize: vertical; min-height: 84px; }
 .seg-tab { font: inherit; font-weight: 600; border: 0; background: transparent; padding: 10px; border-radius: 9px; cursor: pointer; color: var(--muted); min-height: 44px; }
 .seg-tab .count { background: rgba(0,0,0,.07); border-radius: 999px; padding: 0 8px; font-size: .8rem; margin-left: 4px; }
 .seg-tab.active { background: #fff; color: var(--text); box-shadow: var(--shadow); }
-.list-tools { margin-bottom: 10px; }
+.list-tools { margin-bottom: 10px; display: flex; gap: 8px; }
+.list-tools input { flex: 1; min-width: 0; }
+.list-tools .btn { flex: none; }
 .list-toolbar { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-@media (min-width: 760px) { .list-toolbar { grid-template-columns: 1fr 180px auto; align-items: center; } }
+@media (min-width: 760px) { .list-toolbar { grid-template-columns: 1fr 160px auto auto; align-items: center; } }
 
 /* ================= Table (responsive → cards on mobile) ================= */
 .table { width: 100%; border-collapse: collapse; font-size: .94rem; }
@@ -331,6 +375,10 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pdf-header h1 { font-size: 22px; color: #0f766e; }
 .pdf-header h2 { font-size: 16px; font-weight: 500; margin-top: 4px; }
 .pdf-logo { font-size: 30px; }
+.pdf-sub { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+.pdf-chart { margin-bottom: 14px; }
+.pdf-chart h3 { font-size: 15px; margin-bottom: 6px; color: #0f766e; }
+.pdf-chart img { width: 100%; object-fit: contain; display: block; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; }
 .pdf-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .pdf-stat { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; border-left: 4px solid #0f766e; }
 .pdf-stat span { display: block; color: #64748b; font-size: 12px; }
@@ -344,3 +392,4 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pdf-table.ins td:nth-child(1) { width: 26px; }
 .pdf-table.ins td:nth-child(2) { width: 100px; }
 .pdf-table.ins td:nth-child(7) { width: 180px; }
+#sortBtn { white-space: nowrap; }

@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
   <!-- ไลบรารี Export (โหลดแบบ defer) -->
   <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -19,26 +20,22 @@
   <main class="container container-wide">
     <div class="page-head">
       <div>
-        <h1>Dashboard สรุปผลประจำเดือน</h1>
+        <h1>Dashboard สรุปผล</h1>
         <p class="muted" id="periodLabel">—</p>
       </div>
     </div>
 
-    <!-- ตัวเลือกเดือน/ปี + Export -->
-    <section class="card toolbar-card">
-      <div class="period-picker">
-        <div>
-          <label class="label" for="monthSel">เดือน</label>
-          <select id="monthSel" class="input"></select>
-        </div>
-        <div>
-          <label class="label" for="yearSel">ปี (พ.ศ.)</label>
-          <select id="yearSel" class="input"></select>
-        </div>
+    <!-- ช่วงเวลา + Export -->
+    <section class="card">
+      <div class="seg-tabs period-modes" role="tablist" id="modeTabs"></div>
+      <div class="period-bar">
+        <button type="button" class="btn btn-ghost nav-arrow" id="prevBtn" aria-label="ช่วงก่อนหน้า">‹</button>
+        <div class="period-fields" id="periodFields"></div>
+        <button type="button" class="btn btn-ghost nav-arrow" id="nextBtn" aria-label="ช่วงถัดไป">›</button>
         <button class="btn btn-primary" id="viewBtn" type="button">🔎 ดูข้อมูล</button>
       </div>
-      <div class="export-box">
-        <span class="label">Export รายงานเดือนที่เลือก</span>
+      <div class="export-row">
+        <span class="label">Export รายงานช่วงที่เลือก</span>
         <div class="btn-row">
           <button class="btn btn-export pdf" id="exportPdf" type="button">📄 PDF</button>
           <button class="btn btn-export xlsx" id="exportXlsx" type="button">📗 Excel</button>
@@ -49,11 +46,12 @@
 
     <!-- การ์ดสรุป -->
     <section class="stat-grid">
-      <div class="stat-card"><div class="stat-label">ร้านทั้งหมด</div><div class="stat-value" id="statTotal">0</div></div>
-      <div class="stat-card ok"><div class="stat-label">ตรวจแล้ว</div><div class="stat-value" id="statDone">0</div></div>
-      <div class="stat-card warn"><div class="stat-label">ยังไม่ได้ตรวจ</div><div class="stat-value" id="statPending">0</div></div>
-      <div class="stat-card"><div class="stat-label">จำนวนครั้งที่บันทึก</div><div class="stat-value" id="statRecords">0</div></div>
+      <div class="stat-card"><div class="stat-label">ร้านทั้งหมด</div><div class="stat-value" id="statTotal">0</div><div class="stat-delta muted">ร้านที่เปิดใช้งาน</div></div>
+      <div class="stat-card ok"><div class="stat-label">ตรวจแล้ว</div><div class="stat-value" id="statDone">0</div><div class="stat-delta" id="deltaDone"></div></div>
+      <div class="stat-card warn"><div class="stat-label">ยังไม่ได้ตรวจ</div><div class="stat-value" id="statPending">0</div><div class="stat-delta" id="deltaPending"></div></div>
+      <div class="stat-card"><div class="stat-label">จำนวนครั้งที่บันทึก</div><div class="stat-value" id="statRecords">0</div><div class="stat-delta" id="deltaRecords"></div></div>
     </section>
+
     <section class="card">
       <div class="progress-head">
         <span><b>ความคืบหน้าการตรวจ</b></span>
@@ -67,14 +65,14 @@
 
     <!-- สถิติศัตรูพืช -->
     <section class="card">
-      <div class="card-title">สถิติการพบศัตรูพืช (สะสมทั้งเดือน)</div>
-      <p class="hint">นับจากร้านที่ตรวจแล้ว · กดการ์ด "พบ..." เพื่อดูรายละเอียดและรูปภาพ</p>
+      <div class="card-title">สถิติการพบศัตรูพืช (สะสมทั้งช่วง)</div>
+      <p class="hint">นับจากร้านที่ตรวจแล้ว · เทียบกับช่วงก่อนหน้า · กดการ์ด "พบ..." เพื่อดูรายละเอียดและรูปภาพ</p>
       <div class="pest-grid">
         <div class="pest-group">
           <h4>🐀 หนู</h4>
           <div class="pest-cards">
             <button type="button" class="pest-card found" id="ratFound">
-              <span class="pest-label">พบหนู</span><span class="pest-value">0</span><span class="pest-unit">ร้าน · ดูรายละเอียด ›</span>
+              <span class="pest-label">พบหนู</span><span class="pest-value">0</span><span class="pest-unit">ร้าน · ดูรายละเอียด ›</span><span class="stat-delta" data-delta></span>
             </button>
             <div class="pest-card clear" id="ratClear">
               <span class="pest-label">ไม่พบหนู</span><span class="pest-value">0</span><span class="pest-unit">ร้าน</span>
@@ -85,7 +83,7 @@
           <h4>🪳 แมลงสาบ</h4>
           <div class="pest-cards">
             <button type="button" class="pest-card found" id="roachFound">
-              <span class="pest-label">พบแมลงสาบ</span><span class="pest-value">0</span><span class="pest-unit">ร้าน · ดูรายละเอียด ›</span>
+              <span class="pest-label">พบแมลงสาบ</span><span class="pest-value">0</span><span class="pest-unit">ร้าน · ดูรายละเอียด ›</span><span class="stat-delta" data-delta></span>
             </button>
             <div class="pest-card clear" id="roachClear">
               <span class="pest-label">ไม่พบแมลงสาบ</span><span class="pest-value">0</span><span class="pest-unit">ร้าน</span>
@@ -93,6 +91,35 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- กราฟ -->
+    <section class="card">
+      <div class="chart-head">
+        <div class="card-title">📈 แนวโน้มการตรวจและปัญหาที่พบ</div>
+        <span class="muted small" id="trendUnit"></span>
+      </div>
+      <div class="chart-box tall"><canvas id="trendChart" aria-label="กราฟแนวโน้มจำนวนการตรวจแยกตามปัญหา" role="img"></canvas></div>
+      <details class="table-view">
+        <summary>ดูข้อมูลเป็นตาราง</summary>
+        <div id="trendTable" class="table-scroll"></div>
+      </details>
+    </section>
+
+    <div class="chart-grid">
+      <section class="card">
+        <div class="card-title">🏢 เปรียบเทียบรายชั้น (จำนวนร้านที่พบ)</div>
+        <div class="chart-box"><canvas id="floorChart" aria-label="กราฟเปรียบเทียบร้านที่พบหนูและแมลงสาบแยกตามชั้น" role="img"></canvas></div>
+      </section>
+      <section class="card">
+        <div class="card-title">⚖️ เทียบกับช่วงก่อนหน้า</div>
+        <p class="hint mt0" id="compareLabel"></p>
+        <div class="chart-box"><canvas id="compareChart" aria-label="กราฟเปรียบเทียบช่วงปัจจุบันกับช่วงก่อนหน้า" role="img"></canvas></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-title">🧰 วิธีแก้ไขที่ใช้ (จำนวนครั้ง)</div>
       <div class="method-stats" id="methodStats"></div>
     </section>
 
@@ -104,6 +131,7 @@
       </div>
       <div class="list-tools">
         <input type="search" id="listSearch" class="input" placeholder="🔍 ค้นหารหัสหรือชื่อร้าน">
+        <button type="button" class="btn btn-ghost" id="sortBtn">⇅ ชั้น B → 6</button>
       </div>
       <div class="floor-tabs" id="listFloorTabs" role="tablist"></div>
       <div id="storeTable"></div>

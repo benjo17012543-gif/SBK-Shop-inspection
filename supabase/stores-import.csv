@@ -1,344 +1,344 @@
 store_code,store_name,is_active
-B-001,เครื่องหอม,true
-B-002,โรงเกลือมาร์เก็ต,true
-B-003,Sanook Karaoke(สนุก คาราโอเกะ),true
-B-004,MK buffet (เอ็มเค บุฟเฟต์),true
-B-005,Gugu Ckicken (กูร์กูร์ ชิคเก็น),true
-B-006,Shinkanzen Sushi (ชินคันเซ็น ซูชิ),true
-B-007,ก๋วยเตี๋ยว เทพเจ้าเพอร์ซีอุสฯ,true
-B-008,ก๋วยเตี๋ยวเรือพระนคร,true
-B-009,FUJI (ฟูจิ),true
-B-010,WATSONS (วัสสัน) B,true
-B-011,Lemon Farm (เลม่อนฟาร์ม),true
-B-012,Tsuruha (ซูรูฮะ),true
-B-013,บารอนบาร์,true
-B-014,AURORA (ออโรร่า),true
-B-015,ห้างทองเซ่งเฮงเยาวราช,true
-B-016,ห้างทองหวังโต๊ะกังเยาวราช,true
-B-017,ห้างทองเยาวราชกรุงเทพ,true
-B-018,Golden 99 (โกลด์ 99),true
-B-019,Modern Air (โมเดิร์น แอร์),true
-B-020,YAMAZAKI (ยามาซากิ),true
-B-021,Little eyes café (ลิตเติ้ล อาย คาเฟ่),true
-B-022,นายอินทร์,true
-B-023,Elle Nails (เอลลี่เนลล์),true
-B-024,ภูมิใจไทย,true
-B-025,Music Plant (มิวสิค แพลนท์),true
-B-026,The Silver (เดอะ ซิลเวอร์),true
-B-027,โมชิ โมชิ,true
-B-028,B2S (บี.ทู.เอส),true
-B-029,ร้าน Haru Film สาขาซีคอน บางแค,true
-B-030,กายะจิต,true
-B-031,P&F (พี แอนส์ เอฟ),true
-B-032,DUNLOPILLO (ดันลอปปิลโล่),true
-B-033,Office Mate (ออฟฟิทเมท),true
-B-034,Daiso (ไดโซะ),true
-B-035,Dr.Prama (ด็อกเตอร์ พราม่า),true
-B-036,เพาเวอร์บาย (Power buy),true
-B-037,Pet Club (เพ็ทคลับ),true
-B-038,Immersive Art (อิมเมอร์สิฟ อาร์ต),true
-B-039,Tops Market (ท็อป มาเก็ต),true
-B-040,italasiaบางแค,true
-B-041,Click Claok (ซ่อมนาฬิกา),true
-B-042,Yumeya (ยูเมยะ),true
-B-043,ไข่หวานบ้านซูชิ,true
-B-044,หยกสด,true
-B-045,Cha king (ชาคิง),true
-B-046,วราภรณ์,true
-B-047,Kyodai Raman (เคียวได ราเมง),true
-B-048,Gateaux House (กาโตว์ เฮ้าส์),true
-B-049,HI TEA EVERYDAY ชานม,true
-B-050,ไฮโซ โรตี ชาชัก,true
-B-051,White Story (ไวท์ สตอรี่),true
-B-052,Dairy Queen (เดรี่ควีน),true
-B-053,Dunkin Donut (ดังกิ้น โดนัท),true
-B-054,เฉาก๊วยดาหลา,true
-B-055,Kamu Kamu (คามุ คามุ),true
-B-056,MX Cake & Bakry (เอ็มเอกซ์ เค้ก แอนด์ เบเกอรี่),true
-B-057,Olio Pasta (โอลิโอ-พาสต้า),true
-B-058,In Love Salad (อิน-เลิฟ-สลัด),true
-B-059,Yotori (โยโตริ),true
-B-060,ปังสยาม,true
-B-061,Bake Cup (เบค-คัพ),true
-B-062,มังกรบิน,true
-B-063,S&P (เอส-แอนด์-พี),true
-B-064,Potato Corner (โปเตโต้-คอนเนอร์),true
-B-065,BUN (บัน),true
-B-066,Kyodai Sushi (เคียวได-ซูชิ),true
-B-067,Yoguruto โยกุรุโตะ,true
-B-068,เจ-ปัง ไอติมย่างเนย,true
-B-069,N&B (เอ็น แอนด์ บี),true
-B-070,Grainey (เกรนเน่ย์),true
-B-071,เจ-ปัง ไอติมอย่างเนย,true
-B-072,เจ้จงหมูทอด,true
-B-073,Meekwamrat (มีความรัก),true
-B-074,Bowcake (โบว์-เค้ก),true
-B-075,เซ็งซิมอี้,true
-B-076,Gamzai (แก้มใส เปาจี่),true
-B-077,Cleanmateบางแค,true
-B-078,Fuku Matcha (ฟุกุมัทฉะ),true
-B-079,บูธ (ชั่วคราว),true
-B-080,ศูนย์อาหาร(ฟุ๊ดมาเช่ย์)ชั้นบี,true
-B-081,วัชมน,true
-B-082,บองชู,true
-B-083,เค้กใต้หวัน,true
-B-084,Space & Time Cube+ (สเปค ทาม),true
-1-001,เนื้อแท้,true
-1-002,โอ้กะจู๋,true
-1-003,สุกี้ตี๋น้อย,true
-1-004,Myeong Ryun (เมียงรยุน),true
-1-005,SWENSENS (เซเว่นเซ่น),true
-1-006,THE PIZZA COMPANY (เดอะ พิซซ่า คอมปะนี),true
-1-007,KFC (เค เอฟ ซี),true
-1-008,CHESTER GRILL (เชสเตอร์กิลล์),true
-1-009,Bonchon (บอนชอน),true
-1-010,NARISNOW,true
-1-011,ชาตรามือ,true
-1-012,Yakiniku Like (ยากินิคุไลค์),true
-1-013,McDonald's (แมคโดนัลล์),true
-1-014,STARBUCKS (สตาร์บัค),true
-1-015,MUJI (มูจิ),true
-1-016,UNIQLO (ยูนิโค),true
-1-017,Don Don Donki (ดอง ดอง ดองกิ),true
-1-018,2nd Street (เซคเคินด์ สตรีท),true
-1-019,Super Sports (ซูเปอร์สปอร์ต),true
-1-020,SKECHERS (สเก็ตเชอร์ส),true
-1-021,CUTE PRESS (คิวท์เพรส),true
-1-022,ORIENTAL (โอเรียนทอล),true
-1-023,Amazon Cafe (อะเมซอน คาเฟ่),true
-1-024,Rowie's Café,true
-1-025,LEVI'S (ลีวาย),true
-1-026,GQ (จี-คิว),true
-1-027,Prem Bag And Clothes (เปรม แบ็ก แอนด์ โคลทส์),true
-1-028,Beautrium (บิวเทียม),true
-1-029,Kamika (คามิกา),true
-1-030,WACOAL (วาโก้),true
-1-031,Nitori (นิโตริ),true
-1-032,OWNDAYS (โอนเดส์),true
-1-033,Sportsworld (สปอร์ตเวิลด์),true
-1-034,Anello (อ-เนล-โล),true
-1-035,Paris Miki (ปารีส มิกิ),true
-1-036,One To Two (วัน-ทู-ทู),true
-1-037,GAGA Attitude In a cup (กาก้า),true
-1-038,KOI THE’ (โคอิเตะ),true
-1-039,Amor (อะ-มอร์),true
-1-040,Mr.Jolly Yogurt มิสเตอร์ จอลลี่ โยเกิร์ต,true
-1-041,Molto Gelato (มอลโต เจลาโต้),true
-1-042,OH Juice (โอ้ จู๊ซ),true
-1-043,Juneny Candy (จูนนี่แคนดี้),true
-1-044,Kwangthong Cafe (กวางทอง คาเฟ่),true
-1-045,Nokhook Cafe (นกฮู๊ก คาเฟ่),true
-1-046,Jian Cha (เจี้ยนชา),true
-1-047,Jones Salad (โจนส์สลัด),true
-1-048,Olino Crepe & Tea (โอ-ลิ-โนะ เครป แอนด์ ที),true
-1-049,Chagee (ชาจี),true
-1-050,บูธ (ชั่วคราว),true
-1-051,งานกิจกรรมลานกลาง,true
-2-001,ซีซัน,true
-2-002,อราโม่ อโรม่า (Aloma Alamo),true
-2-003,บอนชอน,true
-2-004,Homepro (โฮมโปร),true
-2-005,TG FONE (ทีจี-โฟน),true
-2-006,DTAC (ดีแทค),true
-2-007,Samsung shop (ซัมซุง-ช็อป),true
-2-008,GAC Aion (จี-เอ-ซี-ไอออน),true
-2-009,Huawei Shop (หัวเว่ย ช็อป),true
-2-010,C.S.C (ซี.เอส.ซี),true
-2-011,Stodio7 (สตูดิโอ-เซเว่น),true
-2-012,AGlam บางแค,true
-2-013,bringhome,true
-2-014,OPPO (ออปโป้),true
-2-015,REMAX (รีแมกซ์),true
-2-016,Boots (บูท),true
-2-017,Jaymart IOT (เจมาร์ท),true
-2-018,adidas Shop-in-Shop BANGKOK,true
-2-019,หอแว่น,true
-2-020,Modern optical (โมเดิร์น ออฟติคัล),true
-2-021,Matsukiyo(มัทสึคิโยะ),true
-2-022,Eat Am Are (อีส แอม อาร์),true
-2-023,Watsons (วัสสัน) 2,true
-2-024,La Bella Beauty Art (ลาเบลล่า บิวตี้อาร์ท),true
-2-025,Lash Perfect (แลช เพอร์เฟกต์),true
-2-026,OK Optic (โอ-เค ออพทิค),true
-2-027,BEAR HOUSE (แบร์เฮ้าส์),true
-2-028,บาจา (Bata),true
-2-029,Mini orientals peedbar (มินิ โอเรียนทอล สปีดบาร์),true
-2-030,TELEWIZ (เทเลวิซ),true
-2-031,Buddy Land (บัดดี้แลนด์),true
-2-032,Pepper Lunch (เปเปอร์ลันช์),true
-2-033,Katsuya (คัตซึยะ),true
-2-034,Yves Rocher (อีฟ โรเช),true
-2-035,Pradap (ประดับ),true
-2-036,Mc Jeans (แม็กซ์ ยีนส์),true
-2-037,KKV (เค.เค.วี),true
-2-038,Kamart (คาร์มาร์ท),true
-2-039,Nose Tea (โนสที),true
-2-040,Dr.Pong (ด็อกเตอร์พงศ์),true
-2-041,Seecha (สีชา),true
-2-042,Beauty Lab (บิวตี้ แล็ป),true
-2-043,Mona Accessories (โมนา แอคเซสซอรีส์),true
-2-044,AUNTIE ANNE'S (แอนตี้ แอนส์),true
-2-045,Mister Donut (มิสเตอร์ โดนัท),true
-2-046,ฉันจะกินชาเย็นทุกวัน,true
-2-047,M.C Exsapot,true
-2-048,Pastel Magic (พาสเทล เมจิก),true
-3-001,MR.D.I.Y (ดี.ไอ.วาย),true
-3-002,พรเกษม คลินิก,true
-3-003,Plus Dental clinic (พลัส เดลทัล คลินิก),true
-3-004,MAKALIN Clinic (มัคลินทร์ คลินิก),true
-3-005,SPARSHA (สปาช่า),true
-3-006,Eye Class (อาย คลาส),true
-3-007,Talisa Clinic (ทาลิสา คลินิก),true
-3-008,Gangnam Clinic (กังนัม คลินิก),true
-3-009,ลลิษา คลินิก,true
-3-010,Holly Wood Hair Studio (ฮอลลีวูด แฮร์ สตูดิโอ),true
-3-011,อมร คลินิก,true
-3-012,เจ้าแม่การ์ตูน,true
-3-013,ทรัสต์ คลินิก,true
-3-014,UOB (ยู.โอ.บี),true
-3-015,The Klinique (เดอะ คลินิก),true
-3-016,SCB BANK (ธนาคารไทยพาณิชย์),true
-3-017,K BANK (ธนาคารกสิกร),true
-3-018,KTB BANK (ธนาคารกรุงไทย),true
-3-019,ธนาคารกรุงศรี,true
-3-020,Looks Around Clinic (ลุคส์ อะราวน์ด คลินิก),true
-3-021,เมืองไทยประกันชีวิต,true
-3-022,ธนาคารไทยเครดิต,true
-3-023,ATITA CLINIC (อทิตา คลินิก),true
-3-024,สำนักงานเขตภาษีเจริญ (ย่อย),true
-3-025,ธนาคารอาคารสงเคราะห์,true
-3-026,สำนักงานพัฒนาฝีมือเเรงงานกรุงเทพมหานคร พื้นที่ 4,true
-3-027,ธนาคารเกียรตินาคิน,true
-3-028,GSB BANK (ธนาคารออมสิน),true
-3-029,TTB BANK (ธนาคาร ที.ที.บี),true
-3-030,อิชิบัน ออนเซน,true
-3-031,Lab-X Clinic (แล็ป เอ็กซ์ คลินิก),true
-3-032,DR.jib (ด็อกเตอร์ จิ๊บ),true
-3-033,The Light Clinic (เดอะ ไลท์ คลินิก),true
-3-034,เดอะฟอร์เรส คลีนิค,true
-3-035,เฌอ คลินิค,true
-3-036,นิติพล คลินิก,true
-3-037,True shop (ทรู ช็อป),true
-3-038,YOUR FACE (ยู เฟซ),true
-3-039,HAIR CENTER (แฮร์ เซ็นเตอร์),true
-3-040,YOSINEE CLINIC (ยศสินี คลินิก),true
-3-041,Moya Hair Design (โมย่า แฮร์ ดีไซส์),true
-3-042,Digital Café by Jaymart (เจมาร์ท),true
-3-043,Clover Land (โคเวอร์แลนด์),true
-3-044,Xiaomi (เสียวหมี่),true
-3-045,Bujeong Clinic (พูจอง คลินิก),true
-3-046,ปันกัน,true
-3-047,MOS Dental Clinic (มอส เดนทอล คลินิก),true
-3-048,Hiar 2 style (แฮร์ ทู สไตล์),true
-3-049,ไปรษณีย์ไทย,true
-3-050,คอมแอนด์พริ้นเซอร์วิส,true
-3-051,Fit Answer Fitness (ฟิต แอนเซอร์ ฟิตเนส),true
-3-052,Sound check karaoke (ซาวด์ เช็ค คาราโอเกะ),true
-3-053,E Sports café (อีสปอร์ต คาเฟ่),true
-3-054,SAMSUNG Service (ซัมซุง เซอร์วิส),true
-3-055,J.I.B (เจ.ไอ.บี),true
-3-056,ADVICE (แอดไวส์),true
-3-057,Banana It 3.1 (บานานา 1),true
-3-058,AIS (เอ.ไอ.เอส),true
-3-059,ธนาคารกรุงเทพ,true
-3-060,Banana It 3.2 (บานานา 2),true
-3-061,IT City (ไอ.ที ซีสตี้),true
-3-062,Banana It 3.3 (บานานา 3),true
-3-063,Nifty Clinic (นิฟตี้ คลินิก),true
-3-064,Ergo (เออร์โก),true
-3-065,Super Rich (ซุปเปอร์ริช),true
-3-066,Model Soul (โมเดล โซล),true
-3-067,Focus (โฟกัส),true
-3-068,Click Phone (คลิ๊ก โฟน),true
-3-069,On Cafe (ออน คาเฟ่),true
-3-070,Mr.Time (นาฬิกา),true
-3-071,เทเวศประกันภัย,true
-3-072,Omni(ออม นิ),true
-3-073,Kita Tea Stand (คีตะ ที),true
-3-074,Inthanin (อินทนิล),true
-3-075,IT Zone,true
-3-076,NP Mobile (เอ็น พี โมบาย),true
-3-077,Reboot (รีบูทส์),true
-3-078,B2H (best 2 hom.com) (บี.ทู.เฮช),true
-3-079,108 FILM & CONNECT (108 ฟิล์ม แอนด์ คอนเน็ท),true
-3-080,คิงส์เทค ไอที,true
-3-081,Bonanza it services (โบนาซ่า ไอที เซอร์วิสเซส),true
-3-082,Notebook Service Center (โน้ตบุ๊ค เซอร์วิส คอนเน็ท),true
-3-083,Com&Smart (คอม แอนด์ สมาร์ท),true
-3-084,แอดดีไซน์,true
-3-085,Com & Print (คอม แอนด์ ปริ้นส์),true
-3-086,เอ็ม เค บี คอมพิวเตอร์,true
-3-087,PK COM (พี.เค คอม),true
-3-088,Time (ไทม์),true
-3-089,V.I.P. Notebook (วี.ไอ.พี โน้ตบุ๊ค),true
-3-090,INK Supply (อินค์ ซัพพลาย),true
-3-091,TWENTY FOUR (ทเวนตี้โฟร์),true
-3-092,J&K (เจ แอนด์ เค),true
-3-093,Fix IT (ฟิกซ์ ไอที),true
-3-094,IT World Computer (ไอที เวิล คอมพิวเตอร์),true
-3-095,Film (ฟิล์ม),true
-3-096,ซิกม่าคอมส์,true
-3-097,ซี.เอส.คอม.ซัพพลายส์,true
-3-098,Supreme exclusive clinic (สุพรีม),true
-3-099,Yutaka (ยุตะกะ),true
-3-100,NEC (เนค),true
-3-101,ZETA COMPUTER (เซต้า คอมพิวเตอร์),true
-3-102,J.T.S NINJA (เจ.ที.เอส นินจา),true
-3-103,Big Camera (บิ๊ก คาเมร่า),true
-3-104,EC Mall (อี.ซี มอร์),true
-4-001,วิทยาลัยดุริยางคศิลป์,true
-4-002,Harbor land (ฮาเบอร์แลนด์),true
-4-003,โกเคลอรี่ (Gold curry),true
-4-004,SUKIYA (สุกิยะ),true
-4-005,สุกี้นางพญา,true
-4-006,ฮะจิบัง,true
-4-007,Sushi Plus (ซูชิ พลัส),true
-4-008,Sukishi (ซูกิชิ),true
-4-009,Narai Pizzeria / ข้าน้อยขอชาบู,true
-4-010,AKA (อากะ),true
-4-011,YAYOI (ยาโยอิ),true
-4-012,OISHI BUFFET (โออิชิบุฟเฟต์),true
-4-013,Zhang Liang Malatang (จางเลี่ยงหม่าล่า),true
-4-014,Dookki (ดุ๊กกี้),true
-4-015,MANDARIN (แมนดาริน),true
-4-016,SHABUSHI (ชาบูชิ),true
-4-017,OISHI RAMEN (โออิชิ ราเมง),true
-4-018,ร้านซีเอ็ดบุ๊คเซ็นเตอร์,true
-4-019,MK (เอ็ม.เค),true
-4-020,BAR-B-Q PLAZA (บาร์-บี-คิว พลาซ่า),true
-4-021,Sushiro (ซูชิโร่),true
-4-022,โม หยู เมียว MOYU MEOW,true
-4-023,Neo suki (นีโอ สุกี้),true
-4-024,ซานตาเฟ่,true
-4-025,Match Talent (แมทช์ ทาเลนต์),true
-4-026,เจ้แดงจุ่มนัว,true
-4-027,4 Plus Learning Center (4 พลัส เลิร์นนิ่ง เซ็นเตอร์),true
-4-028,Robothink & Mathbond Seacon Bangkae - ซีคอน บางแค,true
-4-029,Coaching English (โค้ช-ชิ่ง อิงลิช),true
-4-030,Yamaha Music School (ยามาฮ่า มิวสิค สคูล),true
-4-031,Star Maker (สตาร์ เมคเคอะ),true
-4-032,Inlingua (อิงลิชกัว),true
-4-033,ECC (อี-ซี-ซี),true
-4-034,EI Maths (เอธ แมทซ์),true
-4-035,Kumon (คุมอง),true
-4-036,Sizzler (ซิลเลอร์),true
-4-037,Palfish English (แพ็ลฟิช อิงลิช),true
-4-038,Boost Juice(บูสท์ จูซบาร์),true
-4-039,I Can Rend (ไอ แคน เร็น),true
-4-040,Buddy’s Tea & Kakigori,true
-4-041,ยอดชา,true
-4-042,Heng Cha เฮงชา,true
-4-043,โก๋แก่ ถั่ว,true
-4-044,ร้านค้า Street Gourmet (สตรีท กรูเมต์),true
-5-001,โรงหนัง อีจีวี (E.G.V.),true
-5-002,สำนักงานซีคอน,true
-5-003,สำนักงานสรรพากร,true
-5-004,Chinese for Thai Language School (โรงเรียนสอนภาษาจีน),true
-5-005,AUA (เอ.ยู.เอ),true
-5-006,Modern Yoga (โมเดิร์น โยคะ),true
-5-007,Panda Chinese Tutor House (แพนด้า ไชนีส ทิวเตอร์ เฮาส์),true
-5-008,Kid Able (คิส เอเบิล),true
-5-009,Gifted Space (กิฟเต็ด สเปซ),true
-5-010,Perfect Art (เพอเฟคซ์ อาร์ต),true
-5-011,Match House (แมทซ์ เฮ้าส์),true
-6-001,NK Board Game (เอ็น.เค บอร์ด เกม),true
+B-267,เครื่องหอม,true
+B-424,โรงเกลือมาร์เก็ต,true
+B-695,Sanook Karaoke(สนุก คาราโอเกะ),true
+B-438,MK buffet (เอ็มเค บุฟเฟต์),true
+B-019,Gugu Ckicken (กูร์กูร์ ชิคเก็น),true
+B-858,Shinkanzen Sushi (ชินคันเซ็น ซูชิ),true
+B-900,ก๋วยเตี๋ยว เทพเจ้าเพอร์ซีอุสฯ,true
+B-910,ก๋วยเตี๋ยวเรือพระนคร,true
+B-828,FUJI (ฟูจิ),true
+B-523,WATSONS (วัสสัน) B,true
+B-717,Lemon Farm (เลม่อนฟาร์ม),true
+B-904,Tsuruha (ซูรูฮะ),true
+B-541,บารอนบาร์,true
+B-262,AURORA (ออโรร่า),true
+B-742,ห้างทองเซ่งเฮงเยาวราช,true
+B-664,ห้างทองหวังโต๊ะกังเยาวราช,true
+B-557,ห้างทองเยาวราชกรุงเทพ,true
+B-777,Golden 99 (โกลด์ 99),true
+B-544,Modern Air (โมเดิร์น แอร์),true
+B-071,YAMAZAKI (ยามาซากิ),true
+B-308,Little eyes café (ลิตเติ้ล อาย คาเฟ่),true
+B-674,นายอินทร์,true
+B-096,Elle Nails (เอลลี่เนลล์),true
+B-038,ภูมิใจไทย,true
+B-068,Music Plant (มิวสิค แพลนท์),true
+B-744,The Silver (เดอะ ซิลเวอร์),true
+B-626,โมชิ โมชิ,true
+B-163,B2S (บี.ทู.เอส),true
+B-708,ร้าน Haru Film สาขาซีคอน บางแค,true
+B-714,กายะจิต,true
+B-331,P&F (พี แอนส์ เอฟ),true
+B-207,DUNLOPILLO (ดันลอปปิลโล่),true
+B-670,Office Mate (ออฟฟิทเมท),true
+B-238,Daiso (ไดโซะ),true
+B-415,Dr.Prama (ด็อกเตอร์ พราม่า),true
+B-107,เพาเวอร์บาย (Power buy),true
+B-311,Pet Club (เพ็ทคลับ),true
+B-628,Immersive Art (อิมเมอร์สิฟ อาร์ต),true
+B-741,Tops Market (ท็อป มาเก็ต),true
+B-090,italasiaบางแค,true
+B-624,Click Claok (ซ่อมนาฬิกา),true
+B-234,Yumeya (ยูเมยะ),true
+B-039,ไข่หวานบ้านซูชิ,true
+B-794,หยกสด,true
+B-299,Cha king (ชาคิง),true
+B-763,วราภรณ์,true
+B-489,Kyodai Raman (เคียวได ราเมง),true
+B-076,Gateaux House (กาโตว์ เฮ้าส์),true
+B-852,HI TEA EVERYDAY ชานม,true
+B-903,ไฮโซ โรตี ชาชัก,true
+B-146,White Story (ไวท์ สตอรี่),true
+B-091,Dairy Queen (เดรี่ควีน),true
+B-832,Dunkin Donut (ดังกิ้น โดนัท),true
+B-249,เฉาก๊วยดาหลา,true
+B-621,Kamu Kamu (คามุ คามุ),true
+B-800,MX Cake & Bakry (เอ็มเอกซ์ เค้ก แอนด์ เบเกอรี่),true
+B-893,Olio Pasta (โอลิโอ-พาสต้า),true
+B-365,In Love Salad (อิน-เลิฟ-สลัด),true
+B-324,Yotori (โยโตริ),true
+B-151,ปังสยาม,true
+B-173,Bake Cup (เบค-คัพ),true
+B-022,มังกรบิน,true
+B-521,S&P (เอส-แอนด์-พี),true
+B-606,Potato Corner (โปเตโต้-คอนเนอร์),true
+B-508,BUN (บัน),true
+B-946,Kyodai Sushi (เคียวได-ซูชิ),true
+B-196,Yoguruto โยกุรุโตะ,true
+B-250,เจ-ปัง ไอติมย่างเนย,true
+B-401,N&B (เอ็น แอนด์ บี),true
+B-352,Grainey (เกรนเน่ย์),true
+B-178,เจ-ปัง ไอติมอย่างเนย,true
+B-756,เจ้จงหมูทอด,true
+B-688,Meekwamrat (มีความรัก),true
+B-940,Bowcake (โบว์-เค้ก),true
+B-563,เซ็งซิมอี้,true
+B-715,Gamzai (แก้มใส เปาจี่),true
+B-418,Cleanmateบางแค,true
+B-368,Fuku Matcha (ฟุกุมัทฉะ),true
+B-433,บูธ (ชั่วคราว),true
+B-147,ศูนย์อาหาร(ฟุ๊ดมาเช่ย์)ชั้นบี,true
+B-860,วัชมน,true
+B-731,บองชู,true
+B-815,เค้กใต้หวัน,true
+B-258,Space & Time Cube+ (สเปค ทาม),true
+1-128,เนื้อแท้,true
+1-182,โอ้กะจู๋,true
+1-587,สุกี้ตี๋น้อย,true
+1-951,Myeong Ryun (เมียงรยุน),true
+1-867,SWENSENS (เซเว่นเซ่น),true
+1-305,THE PIZZA COMPANY (เดอะ พิซซ่า คอมปะนี),true
+1-436,KFC (เค เอฟ ซี),true
+1-362,CHESTER GRILL (เชสเตอร์กิลล์),true
+1-541,Bonchon (บอนชอน),true
+1-592,NARISNOW,true
+1-769,ชาตรามือ,true
+1-258,Yakiniku Like (ยากินิคุไลค์),true
+1-591,McDonald's (แมคโดนัลล์),true
+1-137,STARBUCKS (สตาร์บัค),true
+1-516,MUJI (มูจิ),true
+1-677,UNIQLO (ยูนิโค),true
+1-206,Don Don Donki (ดอง ดอง ดองกิ),true
+1-197,2nd Street (เซคเคินด์ สตรีท),true
+1-276,Super Sports (ซูเปอร์สปอร์ต),true
+1-944,SKECHERS (สเก็ตเชอร์ส),true
+1-475,CUTE PRESS (คิวท์เพรส),true
+1-974,ORIENTAL (โอเรียนทอล),true
+1-594,Amazon Cafe (อะเมซอน คาเฟ่),true
+1-593,Rowie's Café,true
+1-994,LEVI'S (ลีวาย),true
+1-904,GQ (จี-คิว),true
+1-621,Prem Bag And Clothes (เปรม แบ็ก แอนด์ โคลทส์),true
+1-152,Beautrium (บิวเทียม),true
+1-886,Kamika (คามิกา),true
+1-331,WACOAL (วาโก้),true
+1-581,Nitori (นิโตริ),true
+1-647,OWNDAYS (โอนเดส์),true
+1-381,Sportsworld (สปอร์ตเวิลด์),true
+1-201,Anello (อ-เนล-โล),true
+1-210,Paris Miki (ปารีส มิกิ),true
+1-064,One To Two (วัน-ทู-ทู),true
+1-763,GAGA Attitude In a cup (กาก้า),true
+1-273,KOI THE’ (โคอิเตะ),true
+1-746,Amor (อะ-มอร์),true
+1-311,Mr.Jolly Yogurt มิสเตอร์ จอลลี่ โยเกิร์ต,true
+1-536,Molto Gelato (มอลโต เจลาโต้),true
+1-039,OH Juice (โอ้ จู๊ซ),true
+1-545,Juneny Candy (จูนนี่แคนดี้),true
+1-446,Kwangthong Cafe (กวางทอง คาเฟ่),true
+1-954,Nokhook Cafe (นกฮู๊ก คาเฟ่),true
+1-297,Jian Cha (เจี้ยนชา),true
+1-151,Jones Salad (โจนส์สลัด),true
+1-479,Olino Crepe & Tea (โอ-ลิ-โนะ เครป แอนด์ ที),true
+1-117,Chagee (ชาจี),true
+1-122,บูธ (ชั่วคราว),true
+1-229,งานกิจกรรมลานกลาง,true
+2-881,ซีซัน,true
+2-425,อราโม่ อโรม่า (Aloma Alamo),true
+2-908,บอนชอน,true
+2-220,Homepro (โฮมโปร),true
+2-394,TG FONE (ทีจี-โฟน),true
+2-028,DTAC (ดีแทค),true
+2-553,Samsung shop (ซัมซุง-ช็อป),true
+2-653,GAC Aion (จี-เอ-ซี-ไอออน),true
+2-035,Huawei Shop (หัวเว่ย ช็อป),true
+2-584,C.S.C (ซี.เอส.ซี),true
+2-321,Stodio7 (สตูดิโอ-เซเว่น),true
+2-458,AGlam บางแค,true
+2-522,bringhome,true
+2-488,OPPO (ออปโป้),true
+2-132,REMAX (รีแมกซ์),true
+2-502,Boots (บูท),true
+2-702,Jaymart IOT (เจมาร์ท),true
+2-231,adidas Shop-in-Shop BANGKOK,true
+2-445,หอแว่น,true
+2-368,Modern optical (โมเดิร์น ออฟติคัล),true
+2-634,Matsukiyo(มัทสึคิโยะ),true
+2-416,Eat Am Are (อีส แอม อาร์),true
+2-162,Watsons (วัสสัน) 2,true
+2-212,La Bella Beauty Art (ลาเบลล่า บิวตี้อาร์ท),true
+2-917,Lash Perfect (แลช เพอร์เฟกต์),true
+2-388,OK Optic (โอ-เค ออพทิค),true
+2-167,BEAR HOUSE (แบร์เฮ้าส์),true
+2-785,บาจา (Bata),true
+2-809,Mini orientals peedbar (มินิ โอเรียนทอล สปีดบาร์),true
+2-572,TELEWIZ (เทเลวิซ),true
+2-715,Buddy Land (บัดดี้แลนด์),true
+2-147,Pepper Lunch (เปเปอร์ลันช์),true
+2-142,Katsuya (คัตซึยะ),true
+2-621,Yves Rocher (อีฟ โรเช),true
+2-959,Pradap (ประดับ),true
+2-506,Mc Jeans (แม็กซ์ ยีนส์),true
+2-006,KKV (เค.เค.วี),true
+2-891,Kamart (คาร์มาร์ท),true
+2-916,Nose Tea (โนสที),true
+2-864,Dr.Pong (ด็อกเตอร์พงศ์),true
+2-831,Seecha (สีชา),true
+2-270,Beauty Lab (บิวตี้ แล็ป),true
+2-583,Mona Accessories (โมนา แอคเซสซอรีส์),true
+2-755,AUNTIE ANNE'S (แอนตี้ แอนส์),true
+2-685,Mister Donut (มิสเตอร์ โดนัท),true
+2-008,ฉันจะกินชาเย็นทุกวัน,true
+2-149,M.C Exsapot,true
+2-408,Pastel Magic (พาสเทล เมจิก),true
+3-142,MR.D.I.Y (ดี.ไอ.วาย),true
+3-156,พรเกษม คลินิก,true
+3-191,Plus Dental clinic (พลัส เดลทัล คลินิก),true
+3-378,MAKALIN Clinic (มัคลินทร์ คลินิก),true
+3-801,SPARSHA (สปาช่า),true
+3-077,Eye Class (อาย คลาส),true
+3-629,Talisa Clinic (ทาลิสา คลินิก),true
+3-075,Gangnam Clinic (กังนัม คลินิก),true
+3-383,ลลิษา คลินิก,true
+3-666,Holly Wood Hair Studio (ฮอลลีวูด แฮร์ สตูดิโอ),true
+3-414,อมร คลินิก,true
+3-942,เจ้าแม่การ์ตูน,true
+3-750,ทรัสต์ คลินิก,true
+3-741,UOB (ยู.โอ.บี),true
+3-507,The Klinique (เดอะ คลินิก),true
+3-454,SCB BANK (ธนาคารไทยพาณิชย์),true
+3-715,K BANK (ธนาคารกสิกร),true
+3-296,KTB BANK (ธนาคารกรุงไทย),true
+3-415,ธนาคารกรุงศรี,true
+3-089,Looks Around Clinic (ลุคส์ อะราวน์ด คลินิก),true
+3-104,เมืองไทยประกันชีวิต,true
+3-171,ธนาคารไทยเครดิต,true
+3-961,ATITA CLINIC (อทิตา คลินิก),true
+3-982,สำนักงานเขตภาษีเจริญ (ย่อย),true
+3-640,ธนาคารอาคารสงเคราะห์,true
+3-938,สำนักงานพัฒนาฝีมือเเรงงานกรุงเทพมหานคร พื้นที่ 4,true
+3-660,ธนาคารเกียรตินาคิน,true
+3-164,GSB BANK (ธนาคารออมสิน),true
+3-092,TTB BANK (ธนาคาร ที.ที.บี),true
+3-968,อิชิบัน ออนเซน,true
+3-838,Lab-X Clinic (แล็ป เอ็กซ์ คลินิก),true
+3-781,DR.jib (ด็อกเตอร์ จิ๊บ),true
+3-601,The Light Clinic (เดอะ ไลท์ คลินิก),true
+3-667,เดอะฟอร์เรส คลีนิค,true
+3-425,เฌอ คลินิค,true
+3-724,นิติพล คลินิก,true
+3-043,True shop (ทรู ช็อป),true
+3-394,YOUR FACE (ยู เฟซ),true
+3-533,HAIR CENTER (แฮร์ เซ็นเตอร์),true
+3-283,YOSINEE CLINIC (ยศสินี คลินิก),true
+3-623,Moya Hair Design (โมย่า แฮร์ ดีไซส์),true
+3-572,Digital Café by Jaymart (เจมาร์ท),true
+3-604,Clover Land (โคเวอร์แลนด์),true
+3-745,Xiaomi (เสียวหมี่),true
+3-256,Bujeong Clinic (พูจอง คลินิก),true
+3-407,ปันกัน,true
+3-676,MOS Dental Clinic (มอส เดนทอล คลินิก),true
+3-222,Hiar 2 style (แฮร์ ทู สไตล์),true
+3-691,ไปรษณีย์ไทย,true
+3-330,คอมแอนด์พริ้นเซอร์วิส,true
+3-324,Fit Answer Fitness (ฟิต แอนเซอร์ ฟิตเนส),true
+3-600,Sound check karaoke (ซาวด์ เช็ค คาราโอเกะ),true
+3-440,E Sports café (อีสปอร์ต คาเฟ่),true
+3-544,SAMSUNG Service (ซัมซุง เซอร์วิส),true
+3-169,J.I.B (เจ.ไอ.บี),true
+3-764,ADVICE (แอดไวส์),true
+3-946,Banana It 3.1 (บานานา 1),true
+3-657,AIS (เอ.ไอ.เอส),true
+3-064,ธนาคารกรุงเทพ,true
+3-509,Banana It 3.2 (บานานา 2),true
+3-955,IT City (ไอ.ที ซีสตี้),true
+3-441,Banana It 3.3 (บานานา 3),true
+3-790,Nifty Clinic (นิฟตี้ คลินิก),true
+3-494,Ergo (เออร์โก),true
+3-582,Super Rich (ซุปเปอร์ริช),true
+3-637,Model Soul (โมเดล โซล),true
+3-890,Focus (โฟกัส),true
+3-671,Click Phone (คลิ๊ก โฟน),true
+3-341,On Cafe (ออน คาเฟ่),true
+3-708,Mr.Time (นาฬิกา),true
+3-165,เทเวศประกันภัย,true
+3-467,Omni(ออม นิ),true
+3-963,Kita Tea Stand (คีตะ ที),true
+3-470,Inthanin (อินทนิล),true
+3-211,IT Zone,true
+3-163,NP Mobile (เอ็น พี โมบาย),true
+3-540,Reboot (รีบูทส์),true
+3-669,B2H (best 2 hom.com) (บี.ทู.เฮช),true
+3-090,108 FILM & CONNECT (108 ฟิล์ม แอนด์ คอนเน็ท),true
+3-021,คิงส์เทค ไอที,true
+3-155,Bonanza it services (โบนาซ่า ไอที เซอร์วิสเซส),true
+3-996,Notebook Service Center (โน้ตบุ๊ค เซอร์วิส คอนเน็ท),true
+3-553,Com&Smart (คอม แอนด์ สมาร์ท),true
+3-183,แอดดีไซน์,true
+3-574,Com & Print (คอม แอนด์ ปริ้นส์),true
+3-769,เอ็ม เค บี คอมพิวเตอร์,true
+3-158,PK COM (พี.เค คอม),true
+3-218,Time (ไทม์),true
+3-316,V.I.P. Notebook (วี.ไอ.พี โน้ตบุ๊ค),true
+3-692,INK Supply (อินค์ ซัพพลาย),true
+3-647,TWENTY FOUR (ทเวนตี้โฟร์),true
+3-758,J&K (เจ แอนด์ เค),true
+3-389,Fix IT (ฟิกซ์ ไอที),true
+3-326,IT World Computer (ไอที เวิล คอมพิวเตอร์),true
+3-562,Film (ฟิล์ม),true
+3-108,ซิกม่าคอมส์,true
+3-581,ซี.เอส.คอม.ซัพพลายส์,true
+3-186,Supreme exclusive clinic (สุพรีม),true
+3-783,Yutaka (ยุตะกะ),true
+3-537,NEC (เนค),true
+3-097,ZETA COMPUTER (เซต้า คอมพิวเตอร์),true
+3-569,J.T.S NINJA (เจ.ที.เอส นินจา),true
+3-166,Big Camera (บิ๊ก คาเมร่า),true
+3-575,EC Mall (อี.ซี มอร์),true
+4-589,วิทยาลัยดุริยางคศิลป์,true
+4-280,Harbor land (ฮาเบอร์แลนด์),true
+4-190,โกเคลอรี่ (Gold curry),true
+4-605,SUKIYA (สุกิยะ),true
+4-827,สุกี้นางพญา,true
+4-840,ฮะจิบัง,true
+4-517,Sushi Plus (ซูชิ พลัส),true
+4-751,Sukishi (ซูกิชิ),true
+4-530,Narai Pizzeria / ข้าน้อยขอชาบู,true
+4-001,AKA (อากะ),true
+4-511,YAYOI (ยาโยอิ),true
+4-020,OISHI BUFFET (โออิชิบุฟเฟต์),true
+4-493,Zhang Liang Malatang (จางเลี่ยงหม่าล่า),true
+4-159,Dookki (ดุ๊กกี้),true
+4-469,MANDARIN (แมนดาริน),true
+4-637,SHABUSHI (ชาบูชิ),true
+4-986,OISHI RAMEN (โออิชิ ราเมง),true
+4-445,ร้านซีเอ็ดบุ๊คเซ็นเตอร์,true
+4-115,MK (เอ็ม.เค),true
+4-163,BAR-B-Q PLAZA (บาร์-บี-คิว พลาซ่า),true
+4-593,Sushiro (ซูชิโร่),true
+4-875,โม หยู เมียว MOYU MEOW,true
+4-283,Neo suki (นีโอ สุกี้),true
+4-144,ซานตาเฟ่,true
+4-322,Match Talent (แมทช์ ทาเลนต์),true
+4-653,เจ้แดงจุ่มนัว,true
+4-731,4 Plus Learning Center (4 พลัส เลิร์นนิ่ง เซ็นเตอร์),true
+4-055,Robothink & Mathbond Seacon Bangkae - ซีคอน บางแค,true
+4-926,Coaching English (โค้ช-ชิ่ง อิงลิช),true
+4-402,Yamaha Music School (ยามาฮ่า มิวสิค สคูล),true
+4-417,Star Maker (สตาร์ เมคเคอะ),true
+4-027,Inlingua (อิงลิชกัว),true
+4-393,ECC (อี-ซี-ซี),true
+4-168,EI Maths (เอธ แมทซ์),true
+4-541,Kumon (คุมอง),true
+4-569,Sizzler (ซิลเลอร์),true
+4-045,Palfish English (แพ็ลฟิช อิงลิช),true
+4-920,Boost Juice(บูสท์ จูซบาร์),true
+4-906,I Can Rend (ไอ แคน เร็น),true
+4-848,Buddy’s Tea & Kakigori,true
+4-341,ยอดชา,true
+4-632,Heng Cha เฮงชา,true
+4-400,โก๋แก่ ถั่ว,true
+4-135,ร้านค้า Street Gourmet (สตรีท กรูเมต์),true
+5-536,โรงหนัง อีจีวี (E.G.V.),true
+5-325,สำนักงานซีคอน,true
+5-709,สำนักงานสรรพากร,true
+5-789,Chinese for Thai Language School (โรงเรียนสอนภาษาจีน),true
+5-850,AUA (เอ.ยู.เอ),true
+5-479,Modern Yoga (โมเดิร์น โยคะ),true
+5-835,Panda Chinese Tutor House (แพนด้า ไชนีส ทิวเตอร์ เฮาส์),true
+5-124,Kid Able (คิส เอเบิล),true
+5-888,Gifted Space (กิฟเต็ด สเปซ),true
+5-546,Perfect Art (เพอเฟคซ์ อาร์ต),true
+5-663,Match House (แมทซ์ เฮ้าส์),true
+6-474,NK Board Game (เอ็น.เค บอร์ด เกม),true
