@@ -1,356 +1,297 @@
-/* =====================================================================
- *  inspection.js — หน้าบันทึกการตรวจร้านค้า (สำหรับพนักงานหน้างาน)
- * ===================================================================== */
-(() => {
-  const MAX_PHOTOS = CFG.MAX_PHOTOS || 5;
-  const LS_INSPECTOR = 'pest.inspectorName';
+import {
+  STORAGE_BUCKET, FLOORS, PROBLEM_OPTIONS, NO_PROBLEM, SOLUTION_OPTIONS, OTHER_SOLUTION,
+  IMAGE_OPTIONS, MAX_PHOTOS,
+} from './config.js';
+import { sb, uploadBlob, renderAuthChip } from './supabase-client.js';
+import {
+  initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination, renderFloorTabs,
+  toast, setBusy, monthRange, monthKey, uuid, formatBytes, openLightbox,
+} from './utils.js';
+import { compressImage } from './image-compress.js';
+import { SignaturePad } from './signature-pad.js';
 
-  let stores = [];
-  let inspectedThisMonth = new Map(); // store_id -> จำนวนครั้งที่ตรวจในเดือนนี้
-  let photos = []; // { id, blob, url, origSize, ext }
-  let processing = 0;
-  let hlIndex = -1;
-  let floor = 'all';
+initLayout('inspect');
+renderAuthChip();
 
-  const el = {
-    form: $('#inspectionForm'),
-    search: $('#storeSearch'),
-    list: $('#storeList'),
-    storeId: $('#storeId'),
-    selected: $('#selectedStore'),
-    selName: $('#selStoreName'),
-    selMeta: $('#selStoreMeta'),
-    storeHint: $('#storeHint'),
-    inspector: $('#inspectorName'),
-    problem: $('#problem'),
-    method: $('#solutionMethod'),
-    methodReq: $('#methodReq'),
-    detail: $('#solutionDetail'),
-    detailReq: $('#detailReq'),
-    note: $('#note'),
-    photoGrid: $('#photoGrid'),
-    photoCount: $('#photoCount'),
-    camera: $('#cameraInput'),
-    gallery: $('#galleryInput'),
-    sigWrap: $('#sigWrap'),
-    submit: $('#btnSubmit'),
-  };
+const $ = (id) => document.getElementById(id);
+const els = {
+  form: $('inspectionForm'),
+  search: $('storeSearch'), tabs: $('floorTabs'), list: $('storeList'), pager: $('storePager'),
+  picker: $('storePicker'), selected: $('selectedStore'),
+  problem: $('problem'), solutionSection: $('solutionSection'),
+  method: $('solutionMethod'), detail: $('solutionDetail'), detailReq: $('detailReq'),
+  camera: $('cameraInput'), gallery: $('galleryInput'), photoGrid: $('photoGrid'), photoCount: $('photoCount'),
+  inspector: $('inspectorName'), remarks: $('remarks'),
+  sigCanvas: $('sigCanvas'), sigPlaceholder: $('sigPlaceholder'), clearSig: $('clearSig'),
+  submit: $('submitBtn'), clock: $('clock'),
+};
 
-  /* ---------- Dropdowns ---------- */
-  PROBLEMS.forEach((p) => el.problem.insertAdjacentHTML('beforeend', `<option value="${p}">${p}</option>`));
-  METHODS.forEach((m) => el.method.insertAdjacentHTML('beforeend', `<option value="${m}">${m}</option>`));
+const state = {
+  stores: [],
+  inspectedIds: new Set(),
+  floor: FLOORS[0],
+  search: '',
+  page: 1,
+  selected: null,
+  photos: [], // { id, blob, ext, type, url, originalSize, size }
+};
 
-  function syncMethodState() {
-    const noProblem = el.problem.value === 'ไม่พบปัญหา';
-    el.method.disabled = noProblem;
-    if (noProblem) el.method.value = '';
-    el.methodReq.classList.toggle('hidden', noProblem);
-    el.detailReq.classList.toggle('hidden', el.method.value !== 'อื่นๆ');
-    el.detail.placeholder = el.method.value === 'อื่นๆ'
-      ? 'โปรดระบุวิธีแก้ไขที่ใช้ (จำเป็น)'
-      : 'เช่น ตำแหน่งที่วาง จำนวนจุด ปริมาณที่ใช้';
-  }
-  el.problem.addEventListener('change', () => { syncMethodState(); el.problem.classList.remove('invalid'); });
-  el.method.addEventListener('change', () => { syncMethodState(); el.method.classList.remove('invalid'); });
+/* ---------- ตัวเลือก dropdown ---------- */
+els.problem.insertAdjacentHTML('beforeend',
+  PROBLEM_OPTIONS.map((p) => `<option value="${p}">${p}</option>`).join(''));
+els.method.insertAdjacentHTML('beforeend',
+  SOLUTION_OPTIONS.map((p) => `<option value="${p}">${p}</option>`).join(''));
 
-  /* ---------- Inspector name (จำไว้ในเครื่อง) ---------- */
-  try { el.inspector.value = localStorage.getItem(LS_INSPECTOR) || ''; } catch (_) { /* ignore */ }
-
-  /* ---------- Live clock ---------- */
-  const tick = () => {
-    $('#nowClock').textContent = new Date().toLocaleString('th-TH', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-    });
-  };
-  tick();
-  setInterval(tick, 1000);
-
-  /* ---------- Store combobox ---------- */
-  async function loadStores() {
-    if (!db) { el.storeHint.textContent = 'ยังไม่ได้เชื่อมต่อฐานข้อมูล'; return; }
-    try {
-      const now = new Date();
-      const { start, end } = monthRange(now.getFullYear(), now.getMonth() + 1);
-      const [s, i] = await Promise.all([
-        db.from('stores').select('*').eq('is_active', true).order('code'),
-        db.from('inspections').select('store_id').gte('inspected_at', start).lt('inspected_at', end),
-      ]);
-      if (s.error) throw s.error;
-      stores = (s.data || []).sort(byFloorCode);
-      inspectedThisMonth = new Map();
-      (i.data || []).forEach((r) => inspectedThisMonth.set(r.store_id, (inspectedThisMonth.get(r.store_id) || 0) + 1));
-      const done = stores.filter((x) => inspectedThisMonth.has(x.id)).length;
-      el.storeHint.textContent = `ร้านค้าที่เปิดใช้งาน ${stores.length} ร้าน · ตรวจแล้วเดือนนี้ ${done} ร้าน`;
-      renderChips();
-    } catch (err) {
-      el.storeHint.textContent = 'โหลดรายชื่อร้านค้าไม่สำเร็จ: ' + errMsg(err);
-      toast(errMsg(err), 'error');
-    }
-  }
-
-  function renderChips() {
-    renderFloorChips($('#floorChips'), {
-      stores, value: floor,
-      countFn: (list) => `${list.filter((x) => inspectedThisMonth.has(x.id)).length}/${list.length}`,
-      onChange: (v) => {
-        floor = v;
-        renderChips();
-        if (el.storeId.value) clearStore();
-        el.search.focus();
-        renderList();
-      },
-    });
-  }
-
-  function filterStores(q) {
-    q = q.trim().toLowerCase();
-    const list = stores.filter((s) => floorMatch(floor, s.floor) &&
-      (!q || s.name.toLowerCase().includes(q) || String(s.code).toLowerCase().includes(q)));
-    // เรียงตามชั้น -> ร้านที่ยังไม่ได้ตรวจเดือนนี้ขึ้นก่อน -> รหัส
-    return list.sort((a, b) => floorRank(a.floor) - floorRank(b.floor) ||
-      (inspectedThisMonth.has(a.id) - inspectedThisMonth.has(b.id)) || byFloorCode(a, b)).slice(0, 80);
-  }
-
-  function renderList() {
-    const items = filterStores(el.search.value);
-    hlIndex = -1;
-    if (!items.length) {
-      el.list.innerHTML = `<div class="combo-empty">${stores.length ? `ไม่พบร้านค้า${floor === 'all' ? '' : 'ใน' + floorLabel(floor)}` : 'ยังไม่มีรายชื่อร้านค้า'}</div>`;
-    } else {
-      let prev = null;
-      el.list.innerHTML = items.map((s) => {
-        const n = inspectedThisMonth.get(s.id);
-        const f = s.floor || '';
-        const head = f !== prev ? `<div class="combo-floor">🏢 ${escapeHtml(floorLabel(f))}</div>` : '';
-        prev = f;
-        return `${head}<div class="combo-item" role="option" data-id="${s.id}">
-          <div><div>${escapeHtml(s.name)}</div><div class="code">รหัส ${escapeHtml(s.code)} · ${escapeHtml(floorLabel(s.floor))}</div></div>
-          ${n ? `<span class="badge badge-ok">ตรวจแล้ว ${n} ครั้ง</span>` : '<span class="badge badge-warn">ยังไม่ตรวจ</span>'}
-        </div>`;
-      }).join('');
-    }
-    el.list.classList.add('open');
-  }
-
-  function selectStore(id) {
-    const s = stores.find((x) => x.id === id);
-    if (!s) return;
-    el.storeId.value = s.id;
-    el.selName.textContent = s.name;
-    const n = inspectedThisMonth.get(s.id);
-    el.selMeta.textContent = `รหัส ${s.code} · ${floorLabel(s.floor)}` + (n ? ` · เดือนนี้ตรวจแล้ว ${n} ครั้ง` : ' · ยังไม่ได้ตรวจเดือนนี้');
-    el.selected.classList.add('show');
-    el.search.closest('.combo').classList.add('hidden');
-    el.list.classList.remove('open');
-    el.search.classList.remove('invalid');
-  }
-
-  function clearStore() {
-    el.storeId.value = '';
-    el.search.value = '';
-    el.selected.classList.remove('show');
-    el.search.closest('.combo').classList.remove('hidden');
-  }
-
-  el.search.addEventListener('focus', renderList);
-  el.search.addEventListener('input', renderList);
-  el.search.addEventListener('keydown', (e) => {
-    const items = $$('.combo-item', el.list);
-    if (!items.length) return;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      hlIndex = (hlIndex + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-      items.forEach((it, i) => it.classList.toggle('hl', i === hlIndex));
-      items[hlIndex].scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      selectStore((items[hlIndex] || items[0]).dataset.id);
-    }
+/* ---------- นาฬิกา ---------- */
+function tick() {
+  els.clock.textContent = new Date().toLocaleString('th-TH', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
-  el.list.addEventListener('mousedown', (e) => e.preventDefault()); // กัน blur ก่อน click
-  el.list.addEventListener('click', (e) => {
-    const it = e.target.closest('.combo-item');
-    if (it) selectStore(it.dataset.id);
-  });
-  el.search.addEventListener('blur', () => setTimeout(() => el.list.classList.remove('open'), 120));
-  $('#btnChangeStore').addEventListener('click', () => { clearStore(); el.search.focus(); });
+}
+tick();
+setInterval(tick, 1000);
 
-  /* ---------- Photos ---------- */
-  $('#btnCamera').addEventListener('click', () => el.camera.click());
-  $('#btnGallery').addEventListener('click', () => el.gallery.click());
-  el.camera.addEventListener('change', (e) => handleFiles(e.target.files));
-  el.gallery.addEventListener('change', (e) => handleFiles(e.target.files));
+/* ---------- ลายเซ็น ---------- */
+const sig = new SignaturePad(els.sigCanvas, {
+  onChange: (pad) => els.sigPlaceholder.classList.toggle('hidden', !pad.isEmpty()),
+});
+els.sigCanvas.addEventListener('pointerdown', () => els.sigPlaceholder.classList.add('hidden'));
+els.clearSig.addEventListener('click', () => sig.clear());
 
-  async function handleFiles(fileList) {
-    const files = Array.from(fileList || []).filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
-    el.camera.value = '';
-    el.gallery.value = '';
-    const room = MAX_PHOTOS - photos.length - processing;
-    if (room <= 0) { toast(`แนบรูปได้สูงสุด ${MAX_PHOTOS} รูป`, 'warn'); return; }
-    if (files.length > room) toast(`เลือกได้อีก ${room} รูป (สูงสุด ${MAX_PHOTOS} รูป)`, 'warn');
+/* ---------- ชื่อผู้ตรวจ (จำไว้ในเครื่อง) ---------- */
+try { els.inspector.value = localStorage.getItem('inspectorName') || ''; } catch { /* ignore */ }
 
-    for (const file of files.slice(0, room)) {
-      processing++;
-      renderPhotos();
-      try {
-        const out = await ImageCompressor.compress(file);
-        photos.push({ id: uuid(), blob: out.blob, ext: out.ext, url: URL.createObjectURL(out.blob), origSize: file.size });
-      } catch (err) {
-        toast(`${file.name}: ${err.message}`, 'error');
-      } finally {
-        processing--;
-        renderPhotos();
-      }
-    }
-  }
-
-  function renderPhotos() {
-    el.photoGrid.innerHTML = photos.map((p) => `
-      <div class="photo-item">
-        <img src="${p.url}" alt="รูปประกอบ" data-lightbox="${p.url}">
-        <button type="button" class="rm" data-rm="${p.id}" aria-label="ลบรูป">✕</button>
-        <div class="size">${ImageCompressor.formatBytes(p.origSize)} → ${ImageCompressor.formatBytes(p.blob.size)}</div>
-      </div>`).join('') +
-      Array.from({ length: processing }, () => '<div class="photo-item processing"><div class="spinner sm"></div></div>').join('');
-    el.photoCount.textContent = `(${photos.length}/${MAX_PHOTOS})`;
-  }
-  el.photoGrid.addEventListener('click', (e) => {
-    const id = e.target.closest('[data-rm]')?.dataset.rm;
-    if (!id) return;
-    const p = photos.find((x) => x.id === id);
-    if (p) URL.revokeObjectURL(p.url);
-    photos = photos.filter((x) => x.id !== id);
-    renderPhotos();
-  });
-  renderPhotos();
-
-  /* ---------- Signature ---------- */
-  const sig = new SignaturePad($('#sigCanvas'), {
-    onChange: (empty) => el.sigWrap.classList.toggle('signed', !empty),
-  });
-  $('#btnClearSig').addEventListener('click', () => sig.clear());
-
-  /* ---------- Validate ---------- */
-  function validate() {
-    $$('.invalid', el.form).forEach((x) => x.classList.remove('invalid'));
-    const errors = [];
-    const mark = (node, msg) => { node.classList.add('invalid'); errors.push({ node, msg }); };
-
-    if (!el.storeId.value) mark(el.search, 'กรุณาเลือกร้านค้า');
-    if (!el.inspector.value.trim()) mark(el.inspector, 'กรุณากรอกชื่อพนักงานผู้ตรวจ');
-    if (!el.problem.value) mark(el.problem, 'กรุณาเลือกปัญหาที่พบ');
-    if (el.problem.value && el.problem.value !== 'ไม่พบปัญหา' && !el.method.value) mark(el.method, 'กรุณาเลือกวิธีการแก้ไข');
-    if (el.method.value === 'อื่นๆ' && !el.detail.value.trim()) mark(el.detail, 'กรุณาระบุรายละเอียดวิธีแก้ไข (อื่นๆ)');
-    if (processing > 0) errors.push({ node: el.photoGrid, msg: 'กรุณารอให้บีบอัดรูปเสร็จก่อน' });
-    if (CFG.REQUIRE_PHOTO && photos.length === 0) errors.push({ node: el.photoGrid, msg: 'กรุณาแนบรูปภาพอย่างน้อย 1 รูป' });
-    if (sig.isEmpty()) { el.sigWrap.classList.add('invalid'); errors.push({ node: el.sigWrap, msg: 'กรุณาเซ็นชื่อ' }); }
-
-    if (errors.length) {
-      toast(errors[0].msg, 'error');
-      errors[0].node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return false;
-    }
-    return true;
-  }
-
-  /* ---------- Submit ---------- */
-  el.form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!db) { toast('ยังไม่ได้เชื่อมต่อ Supabase (แก้ไข js/config.js)', 'error'); return; }
-    if (!validate()) return;
-
-    const store = stores.find((s) => s.id === el.storeId.value);
-    const id = uuid();
+/* ---------- โหลดร้านค้า ---------- */
+async function loadStores() {
+  if (!sb) { renderStores(); return; }
+  els.list.innerHTML = '<div class="empty"><span class="spinner dark"></span> กำลังโหลดรายชื่อร้าน...</div>';
+  try {
     const now = new Date();
-    const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${id}`;
-    const bucket = db.storage.from(CFG.STORAGE_BUCKET);
-    const uploaded = [];
+    const { start, end } = monthRange(now.getFullYear(), now.getMonth());
+    const [storesRes, insRes] = await Promise.all([
+      sb.from('stores').select('id, store_code, store_name, is_active').eq('is_active', true),
+      sb.from('inspections').select('store_id').gte('created_at', start).lt('created_at', end),
+    ]);
+    if (storesRes.error) throw storesRes.error;
+    state.stores = (storesRes.data || []).sort(compareStores);
+    state.inspectedIds = new Set((insRes.data || []).map((r) => r.store_id));
+    const firstFloor = FLOORS.find((f) => state.stores.some((s) => getFloor(s.store_code) === f));
+    if (firstFloor) state.floor = firstFloor;
+  } catch (err) {
+    console.error(err);
+    toast(`โหลดรายชื่อร้านไม่สำเร็จ: ${err.message}`, 'error');
+  }
+  renderStores();
+}
 
-    el.submit.disabled = true;
-    try {
-      // 1) อัปโหลดรูป
-      const photoUrls = [];
-      for (let i = 0; i < photos.length; i++) {
-        showLoading(`กำลังอัปโหลดรูป ${i + 1}/${photos.length}...`);
-        const path = `${folder}/photo-${i + 1}.${photos[i].ext}`;
-        const { error } = await bucket.upload(path, photos[i].blob, { contentType: photos[i].blob.type, upsert: false });
-        if (error) throw error;
-        uploaded.push(path);
-        photoUrls.push(bucket.getPublicUrl(path).data.publicUrl);
-      }
+function renderStores() {
+  const q = state.search.trim().toLowerCase();
+  const counts = {};
+  state.stores.forEach((s) => { const f = getFloor(s.store_code); counts[f] = (counts[f] || 0) + 1; });
 
-      // 2) อัปโหลดลายเซ็น
-      showLoading('กำลังบันทึกลายเซ็น...');
-      const sigBlob = await sig.toBlob();
-      const sigPath = `${folder}/signature.png`;
-      const sigUp = await bucket.upload(sigPath, sigBlob, { contentType: 'image/png', upsert: false });
-      if (sigUp.error) throw sigUp.error;
-      uploaded.push(sigPath);
-      const signatureUrl = bucket.getPublicUrl(sigPath).data.publicUrl;
-
-      // 3) บันทึกข้อมูล (timestamp ใช้เวลาเซิร์ฟเวอร์อัตโนมัติ)
-      showLoading('กำลังบันทึกข้อมูล...');
-      const row = {
-        id,
-        store_id: store.id,
-        store_code: store.code,
-        store_name: store.name,
-        store_floor: store.floor || null,
-        inspector_name: el.inspector.value.trim(),
-        problem: el.problem.value,
-        solution_method: el.problem.value === 'ไม่พบปัญหา' ? null : el.method.value,
-        solution_detail: el.detail.value.trim() || null,
-        note: el.note.value.trim() || null,
-        photo_urls: photoUrls,
-        signature_url: signatureUrl,
-      };
-      let { error } = await db.from('inspections').insert(row);
-      // ฐานข้อมูลเวอร์ชันเก่ายังไม่มีคอลัมน์ store_floor -> บันทึกโดยไม่ใส่ชั้น
-      if (error && /store_floor/.test(error.message || '')) {
-        delete row.store_floor;
-        ({ error } = await db.from('inspections').insert(row));
-      }
-      if (error) throw error;
-
-      try { localStorage.setItem(LS_INSPECTOR, el.inspector.value.trim()); } catch (_) { /* ignore */ }
-      inspectedThisMonth.set(store.id, (inspectedThisMonth.get(store.id) || 0) + 1);
-      renderChips();
-      hideLoading();
-      toast(`บันทึกการตรวจ "${store.name}" เรียบร้อยแล้ว ✅`, 'success', 4000);
-      resetForm();
-    } catch (err) {
-      hideLoading();
-      // พยายามลบไฟล์ที่อัปโหลดไปแล้ว (อาจไม่มีสิทธิ์ลบ ไม่เป็นไร)
-      if (uploaded.length) bucket.remove(uploaded).catch(() => {});
-      toast('บันทึกไม่สำเร็จ: ' + errMsg(err), 'error', 6000);
-    } finally {
-      el.submit.disabled = false;
-    }
+  // ค้นหา → ค้นทุกชั้น ; ไม่ค้นหา → แสดงตามแท็บชั้น
+  els.tabs.classList.toggle('dimmed', !!q);
+  renderFloorTabs(els.tabs, counts, q ? null : state.floor, (f) => {
+    state.floor = f; state.page = 1; state.search = ''; els.search.value = ''; renderStores();
   });
 
-  function resetForm() {
-    clearStore();
-    el.problem.value = '';
-    el.method.value = '';
-    el.detail.value = '';
-    el.note.value = '';
-    photos.forEach((p) => URL.revokeObjectURL(p.url));
-    photos = [];
+  const filtered = state.stores.filter((s) => (q
+    ? `${s.store_code} ${s.store_name}`.toLowerCase().includes(q)
+    : getFloor(s.store_code) === state.floor));
+  const pg = paginate(filtered, state.page);
+  state.page = pg.page;
+
+  if (!sb) {
+    els.list.innerHTML = '<div class="empty">ยังไม่ได้เชื่อมต่อฐานข้อมูล</div>';
+  } else if (!pg.items.length) {
+    els.list.innerHTML = `<div class="empty">${q ? 'ไม่พบร้านที่ค้นหา' : 'ไม่มีร้านในชั้นนี้'}</div>`;
+  } else {
+    els.list.innerHTML = pg.items.map((s) => {
+      const done = state.inspectedIds.has(s.id);
+      return `
+        <button type="button" class="store-item ${state.selected?.id === s.id ? 'active' : ''}" data-id="${s.id}">
+          <span class="store-code">${escapeHtml(s.store_code)}</span>
+          <span class="store-name">${escapeHtml(s.store_name)}</span>
+          ${q ? `<span class="tag">ชั้น ${getFloor(s.store_code)}</span>` : ''}
+          ${done ? '<span class="badge badge-ok" title="ตรวจแล้วในเดือนนี้">✓ ตรวจแล้ว</span>' : ''}
+        </button>`;
+    }).join('');
+    els.list.querySelectorAll('[data-id]').forEach((b) =>
+      b.addEventListener('click', () => selectStore(state.stores.find((s) => s.id === b.dataset.id))));
+  }
+  renderPagination(els.pager, pg, (p) => { state.page = p; renderStores(); });
+}
+
+function selectStore(store) {
+  state.selected = store;
+  if (!store) {
+    els.selected.classList.add('hidden');
+    els.picker.classList.remove('hidden');
+    renderStores();
+    return;
+  }
+  const done = state.inspectedIds.has(store.id);
+  els.selected.innerHTML = `
+    <div>
+      <div class="muted small">ร้านที่เลือก · ชั้น ${getFloor(store.store_code)}</div>
+      <div class="selected-name"><span class="store-code">${escapeHtml(store.store_code)}</span> ${escapeHtml(store.store_name)}</div>
+      ${done ? '<span class="badge badge-ok">✓ เดือนนี้ตรวจแล้ว (บันทึกเพิ่มได้)</span>' : ''}
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" id="changeStore">เปลี่ยนร้าน</button>`;
+  els.selected.querySelector('#changeStore').addEventListener('click', () => selectStore(null));
+  els.selected.classList.remove('hidden');
+  els.picker.classList.add('hidden');
+  els.problem.focus({ preventScroll: true });
+  els.problem.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+let searchTimer;
+els.search.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.search = els.search.value; state.page = 1; renderStores(); }, 200);
+});
+
+/* ---------- ปัญหา / วิธีแก้ไข ---------- */
+function syncSolution() {
+  const none = els.problem.value === NO_PROBLEM;
+  els.solutionSection.classList.toggle('hidden', none);
+  if (none) { els.method.value = ''; els.detail.value = ''; }
+  els.detailReq.classList.toggle('hidden', els.method.value !== OTHER_SOLUTION);
+}
+els.problem.addEventListener('change', syncSolution);
+els.method.addEventListener('change', syncSolution);
+
+/* ---------- รูปภาพ ---------- */
+async function addFiles(fileList) {
+  const files = [...fileList];
+  const room = MAX_PHOTOS - state.photos.length;
+  if (room <= 0) { toast(`แนบรูปได้สูงสุด ${MAX_PHOTOS} รูป`, 'warn'); return; }
+  if (files.length > room) toast(`แนบได้อีก ${room} รูป (สูงสุด ${MAX_PHOTOS})`, 'warn');
+
+  for (const file of files.slice(0, room)) {
+    const id = uuid();
+    state.photos.push({ id, pending: true });
     renderPhotos();
-    sig.clear();
-    syncMethodState();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    const done = stores.filter((x) => inspectedThisMonth.has(x.id)).length;
-    el.storeHint.textContent = `ร้านค้าที่เปิดใช้งาน ${stores.length} ร้าน · ตรวจแล้วเดือนนี้ ${done} ร้าน`;
+    try {
+      const r = await compressImage(file, IMAGE_OPTIONS);
+      Object.assign(state.photos.find((p) => p.id === id), {
+        pending: false, blob: r.blob, ext: r.ext, type: r.type,
+        url: URL.createObjectURL(r.blob), originalSize: r.originalSize, size: r.size,
+      });
+    } catch (err) {
+      state.photos = state.photos.filter((p) => p.id !== id);
+      toast(err.message, 'error');
+    }
+    renderPhotos();
+  }
+}
+
+function renderPhotos() {
+  els.photoCount.textContent = `(${state.photos.length}/${MAX_PHOTOS})`;
+  els.photoGrid.innerHTML = state.photos.map((p) => (p.pending
+    ? '<div class="photo-item loading"><span class="spinner dark"></span><small>กำลังบีบอัด...</small></div>'
+    : `<div class="photo-item">
+         <img src="${p.url}" alt="รูปประกอบ" data-view="${p.id}">
+         <button type="button" class="photo-del" data-del="${p.id}" aria-label="ลบรูป">✕</button>
+         <small class="photo-size">${formatBytes(p.originalSize)} → <b>${formatBytes(p.size)}</b></small>
+       </div>`)).join('');
+  els.photoGrid.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
+    const p = state.photos.find((x) => x.id === b.dataset.del);
+    if (p?.url) URL.revokeObjectURL(p.url);
+    state.photos = state.photos.filter((x) => x.id !== b.dataset.del);
+    renderPhotos();
+  }));
+  els.photoGrid.querySelectorAll('[data-view]').forEach((img) =>
+    img.addEventListener('click', () => openLightbox(img.src)));
+}
+
+[els.camera, els.gallery].forEach((input) => input.addEventListener('change', async () => {
+  if (input.files.length) await addFiles(input.files);
+  input.value = '';
+}));
+
+/* ---------- บันทึก ---------- */
+function validate() {
+  const problem = els.problem.value;
+  if (!state.selected) return ['กรุณาเลือกร้านค้า', els.search];
+  if (!problem) return ['กรุณาเลือกปัญหาที่พบ', els.problem];
+  if (problem !== NO_PROBLEM && !els.method.value) return ['กรุณาเลือกวิธีการแก้ไขปัญหา', els.method];
+  if (els.method.value === OTHER_SOLUTION && !els.detail.value.trim())
+    return ['กรุณากรอกรายละเอียดวิธีแก้ไข (เลือก "อื่นๆ")', els.detail];
+  if (state.photos.some((p) => p.pending)) return ['กรุณารอให้บีบอัดรูปภาพเสร็จก่อน', null];
+  if (!els.inspector.value.trim()) return ['กรุณากรอกชื่อพนักงานผู้ตรวจ', els.inspector];
+  if (sig.isEmpty()) return ['กรุณาเซ็นชื่อก่อนบันทึก', els.sigCanvas];
+  return null;
+}
+
+els.form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!sb) { toast('ยังไม่ได้ตั้งค่า Supabase ใน js/config.js', 'error'); return; }
+  const invalid = validate();
+  if (invalid) {
+    toast(invalid[0], 'warn');
+    invalid[1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    invalid[1]?.focus?.({ preventScroll: true });
+    return;
   }
 
-  // เตือนก่อนออกจากหน้าเมื่อกรอกข้อมูลค้างไว้
-  window.addEventListener('beforeunload', (e) => {
-    if (photos.length || !sig.isEmpty() || el.storeId.value) { e.preventDefault(); e.returnValue = ''; }
-  });
+  setBusy(els.submit, true, 'กำลังอัปโหลด...');
+  const folder = monthKey();
+  try {
+    const imageUrls = [];
+    for (let i = 0; i < state.photos.length; i++) {
+      const p = state.photos[i];
+      els.submit.lastChild.textContent = `กำลังอัปโหลดรูป ${i + 1}/${state.photos.length}...`;
+      imageUrls.push(await uploadBlob(STORAGE_BUCKET, `photos/${folder}/${uuid()}.${p.ext}`, p.blob, p.type));
+    }
+    els.submit.lastChild.textContent = 'กำลังบันทึกลายเซ็น...';
+    const sigBlob = await sig.toBlob();
+    const signatureUrl = await uploadBlob(STORAGE_BUCKET, `signatures/${folder}/${uuid()}.png`, sigBlob, 'image/png');
 
-  /* ---------- Init ---------- */
-  syncMethodState();
-  if (requireConfig()) loadStores();
-})();
+    els.submit.lastChild.textContent = 'กำลังบันทึกข้อมูล...';
+    const problem = els.problem.value;
+    const payload = {
+      store_id: state.selected.id,
+      store_code: state.selected.store_code,
+      store_name: state.selected.store_name,
+      problem,
+      solution_method: problem === NO_PROBLEM ? null : els.method.value,
+      solution_detail: els.detail.value.trim() || null,
+      image_urls: imageUrls,
+      signature_url: signatureUrl,
+      inspector_name: els.inspector.value.trim(),
+      remarks: els.remarks.value.trim() || null,
+    };
+    const { error } = await sb.from('inspections').insert(payload);
+    if (error) throw error;
+
+    try { localStorage.setItem('inspectorName', payload.inspector_name); } catch { /* ignore */ }
+    state.inspectedIds.add(state.selected.id);
+    toast(`บันทึกการตรวจร้าน ${payload.store_code} เรียบร้อย ✓`, 'success');
+    resetForm();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+    toast(`บันทึกไม่สำเร็จ: ${err.message}`, 'error', 5000);
+  } finally {
+    setBusy(els.submit, false);
+  }
+});
+
+function resetForm() {
+  els.problem.value = '';
+  els.method.value = '';
+  els.detail.value = '';
+  els.remarks.value = '';
+  state.photos.forEach((p) => p.url && URL.revokeObjectURL(p.url));
+  state.photos = [];
+  renderPhotos();
+  sig.clear();
+  syncSolution();
+  selectStore(null);
+}
+
+renderPhotos();
+syncSolution();
+loadStores();

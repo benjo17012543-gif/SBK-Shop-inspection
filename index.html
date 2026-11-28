@@ -1,139 +1,107 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f7a4f">
-  <title>บันทึกการตรวจร้านค้า | ระบบควบคุมศัตรูพืช</title>
+  <meta name="theme-color" content="#0f766e">
+  <title>บันทึกการตรวจร้านค้า | Pest Inspect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css?v=20261128">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
-<body data-page="inspect">
-  <header class="app-header">
-    <div class="inner">
-      <div class="brand">
-        <div class="brand-logo">🐀</div>
-        <div>ตรวจร้านค้า<small>ระบบติดตามศัตรูพืช</small></div>
-      </div>
-      <nav class="nav">
-        <a href="./index.html" data-page="inspect"><span class="ico">📝</span><span>บันทึกตรวจ</span></a>
-        <a href="./dashboard.html" data-page="dashboard"><span class="ico">📊</span><span>แดชบอร์ด</span></a>
-        <a href="./stores.html" data-page="stores"><span class="ico">🏪</span><span>ร้านค้า</span></a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="narrow">
-    <div class="page-title">
+<body>
+  <main class="container">
+    <div class="page-head">
       <div>
         <h1>บันทึกการตรวจร้านค้า</h1>
-        <p>กรอกข้อมูลให้ครบ ถ่ายรูป และเซ็นชื่อก่อนบันทึก</p>
+        <p class="muted">บันทึกผลการตรวจหนูและแมลงสาบ</p>
       </div>
+      <div class="clock" id="clock" aria-label="วันและเวลาปัจจุบัน"></div>
     </div>
 
-    <form id="inspectionForm" novalidate autocomplete="off">
-      <!-- 1. ร้านค้า -->
-      <section class="card">
-        <div class="card-title"><span class="step">1</span>ร้านค้า</div>
-        <div class="field" id="floorField">
-          <span class="label">🏢 เลือกชั้น</span>
-          <div class="floor-chips" id="floorChips"></div>
-          <div class="hint">ตัวเลข = ตรวจแล้ว / ทั้งหมด ในเดือนนี้</div>
-        </div>
-        <div class="field">
-          <label for="storeSearch">ชื่อร้านค้า <span class="req">*</span></label>
-          <div class="combo">
-            <input type="search" id="storeSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสร้านค้าเพื่อค้นหา..." inputmode="search" aria-autocomplete="list" aria-controls="storeList">
-            <div class="combo-list" id="storeList" role="listbox"></div>
+    <form id="inspectionForm" novalidate>
+      <!-- 1. เลือกร้านค้า -->
+      <section class="card" id="storeSection">
+        <div class="card-title"><span class="step">1</span>เลือกร้านค้า <span class="req">*</span></div>
+
+        <div id="selectedStore" class="selected-store hidden"></div>
+
+        <div id="storePicker">
+          <div class="search-box">
+            <input type="search" id="storeSearch" placeholder="🔍 ค้นหารหัสหรือชื่อร้าน (ค้นหาทุกชั้น)" autocomplete="off">
           </div>
-          <input type="hidden" id="storeId">
-          <div class="selected-store" id="selectedStore">
-            <div><b id="selStoreName"></b><span id="selStoreMeta"></span></div>
-            <button type="button" class="btn btn-ghost btn-sm" id="btnChangeStore">เปลี่ยน</button>
-          </div>
-          <div class="hint" id="storeHint">กำลังโหลดรายชื่อร้านค้า...</div>
-        </div>
-        <div class="field">
-          <label for="inspectorName">ชื่อพนักงานผู้ตรวจ <span class="req">*</span></label>
-          <input type="text" id="inspectorName" placeholder="ชื่อ-นามสกุล" autocomplete="name">
-          <div class="hint">ระบบจะจำชื่อไว้ในเครื่องนี้สำหรับครั้งถัดไป</div>
+          <div class="floor-tabs" id="floorTabs" role="tablist" aria-label="เลือกชั้น"></div>
+          <div class="store-grid" id="storeList"></div>
+          <div class="pagination" id="storePager"></div>
         </div>
       </section>
 
-      <!-- 2. ปัญหาและการแก้ไข -->
+      <!-- 2. ปัญหาที่พบ -->
       <section class="card">
-        <div class="card-title"><span class="step">2</span>ปัญหาที่พบ &amp; การแก้ไข</div>
-        <div class="field">
-          <label for="problem">ปัญหาที่พบ <span class="req">*</span></label>
-          <select id="problem">
-            <option value="">— เลือกปัญหาที่พบ —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="solutionMethod">วิธีการแก้ไขปัญหา <span class="req" id="methodReq">*</span></label>
-          <select id="solutionMethod">
-            <option value="">— เลือกวิธีแก้ไข —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="solutionDetail">รายละเอียดวิธีแก้ไขปัญหา <span class="req hidden" id="detailReq">*</span></label>
-          <textarea id="solutionDetail" placeholder="เช่น ตำแหน่งที่วาง จำนวนจุด ปริมาณที่ใช้"></textarea>
-        </div>
+        <div class="card-title"><span class="step">2</span>ปัญหาที่พบ <span class="req">*</span></div>
+        <select id="problem" class="input" required>
+          <option value="">— เลือกปัญหาที่พบ —</option>
+        </select>
       </section>
 
-      <!-- 3. รูปภาพ -->
+      <!-- 3. วิธีการแก้ไข -->
+      <section class="card" id="solutionSection">
+        <div class="card-title"><span class="step">3</span>วิธีการแก้ไขปัญหา <span class="req">*</span></div>
+        <label class="label" for="solutionMethod">เลือกวิธีแก้ไข</label>
+        <select id="solutionMethod" class="input">
+          <option value="">— เลือกวิธีแก้ไข —</option>
+        </select>
+        <label class="label" for="solutionDetail">รายละเอียดวิธีแก้ไขปัญหา <span id="detailReq" class="req hidden">*</span></label>
+        <textarea id="solutionDetail" class="input" rows="3" placeholder="เช่น จุดที่วางเหยื่อ จำนวนกรง ปริมาณเจล ฯลฯ"></textarea>
+      </section>
+
+      <!-- 4. รูปภาพ -->
       <section class="card">
-        <div class="card-title"><span class="step">3</span>รูปภาพประกอบ <span class="muted" style="font-weight:400;font-size:13px" id="photoCount"></span></div>
-        <div class="photo-actions">
-          <button type="button" class="btn btn-primary" id="btnCamera">📷 ถ่ายรูป</button>
-          <button type="button" class="btn btn-outline" id="btnGallery">🖼️ เลือกจากคลัง</button>
+        <div class="card-title"><span class="step">4</span>รูปภาพประกอบ <span class="muted small" id="photoCount"></span></div>
+        <div class="btn-row">
+          <label class="btn btn-outline">
+            📷 ถ่ายภาพ
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+          </label>
+          <label class="btn btn-outline">
+            🖼️ เลือกจากคลังภาพ
+            <input type="file" id="galleryInput" accept="image/*" multiple hidden>
+          </label>
         </div>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
-        <input type="file" id="galleryInput" accept="image/*" multiple class="hidden">
+        <p class="hint">ระบบจะบีบอัดรูปอัตโนมัติก่อนอัปโหลด เพื่อประหยัดพื้นที่และโหลดเร็ว</p>
         <div class="photo-grid" id="photoGrid"></div>
-        <div class="hint" id="photoHint">ระบบจะบีบอัดรูปอัตโนมัติก่อนอัปโหลด เพื่อประหยัดพื้นที่และโหลดเร็ว</div>
       </section>
 
-      <!-- 4. ลายเซ็น -->
+      <!-- 5. ลายเซ็น -->
       <section class="card">
-        <div class="card-title" style="justify-content:space-between">
-          <span style="display:flex;gap:8px;align-items:center"><span class="step">4</span>ลายเซ็นพนักงาน <span class="req">*</span></span>
-          <button type="button" class="btn btn-danger-outline btn-sm" id="btnClearSig">ล้างลายเซ็น</button>
+        <div class="card-title"><span class="step">5</span>ผู้ตรวจและลายเซ็น <span class="req">*</span></div>
+        <label class="label" for="inspectorName">ชื่อพนักงานผู้ตรวจ</label>
+        <input type="text" id="inspectorName" class="input" placeholder="ชื่อ-นามสกุล" autocomplete="name" required>
+        <label class="label">ลายเซ็นพนักงาน</label>
+        <div class="sig-wrap">
+          <canvas id="sigCanvas" class="sig-canvas" aria-label="ช่องเซ็นชื่อ"></canvas>
+          <span class="sig-placeholder" id="sigPlaceholder">เซ็นชื่อที่นี่</span>
         </div>
-        <div class="sig-wrap" id="sigWrap">
-          <canvas id="sigCanvas" aria-label="ช่องวาดลายเซ็น"></canvas>
-          <div class="sig-line"></div>
-          <div class="sig-placeholder">✍️ เซ็นชื่อที่นี่</div>
+        <div class="btn-row end">
+          <button type="button" class="btn btn-ghost btn-sm" id="clearSig">🧽 ล้างลายเซ็น</button>
         </div>
       </section>
 
-      <!-- 5. หมายเหตุ & เวลา -->
+      <!-- 6. หมายเหตุ -->
       <section class="card">
-        <div class="card-title"><span class="step">5</span>หมายเหตุ &amp; เวลาบันทึก</div>
-        <div class="field">
-          <label for="note">หมายเหตุเพิ่มเติม</label>
-          <textarea id="note" placeholder="ข้อสังเกตอื่นๆ (ถ้ามี)"></textarea>
-        </div>
-        <div class="field">
-          <span class="label">วันที่และเวลาที่บันทึก</span>
-          <div class="timestamp-box">🕒 <span id="nowClock">-</span></div>
-          <div class="hint">ระบบบันทึกเวลาอัตโนมัติจากเซิร์ฟเวอร์เมื่อกดบันทึก</div>
-        </div>
+        <div class="card-title"><span class="step">6</span>หมายเหตุเพิ่มเติม</div>
+        <textarea id="remarks" class="input" rows="3" placeholder="ข้อสังเกตอื่นๆ (ถ้ามี)"></textarea>
+        <p class="hint">🕒 วันที่และเวลาบันทึกจะถูกบันทึกอัตโนมัติเมื่อกดบันทึก</p>
       </section>
 
       <div class="submit-bar">
-        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnSubmit">💾 บันทึกการตรวจ</button>
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">💾 บันทึกการตรวจ</button>
       </div>
     </form>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="./js/config.js?v=20261128"></script>
-  <script src="./js/common.js?v=20261128"></script>
-  <script src="./js/image-compress.js?v=20261128"></script>
-  <script src="./js/signature-pad.js?v=20261128"></script>
-  <script src="./js/inspection.js?v=20261128"></script>
+  <script type="module" src="js/inspection.js"></script>
 </body>
 </html>

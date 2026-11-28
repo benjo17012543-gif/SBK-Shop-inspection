@@ -1,140 +1,128 @@
-/* =====================================================================
- *  signature-pad.js — ช่องวาดลายเซ็นดิจิทัล (Canvas + Pointer Events)
- *  รองรับนิ้ว / ปากกา / เมาส์ และหน้าจอความละเอียดสูง (HiDPI)
- * ===================================================================== */
-class SignaturePad {
-  constructor(canvas, { onChange } = {}) {
+/**
+ * Signature Pad บน Canvas (เขียนเอง ไม่พึ่งไลบรารี)
+ * - รองรับนิ้ว / ปากกา / เมาส์ ด้วย Pointer Events
+ * - คมชัดบนจอ HiDPI (devicePixelRatio)
+ * - เก็บเส้นแบบพิกัดสัมพัทธ์ (0..1) จึงวาดใหม่ได้ถูกต้องเมื่อขนาดจอเปลี่ยน/หมุนจอ
+ */
+export class SignaturePad {
+  constructor(canvas, { penColor = '#0f172a', lineWidth = 2.4, onChange } = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.onChange = onChange || (() => {});
-    this.strokes = [];   // เก็บเส้นไว้วาดใหม่เมื่อปรับขนาดจอ
+    this.penColor = penColor;
+    this.lineWidth = lineWidth;
+    this.onChange = onChange;
+    this.strokes = [];
     this.current = null;
     this.lastWidth = 0;
 
-    this._down = this._down.bind(this);
-    this._move = this._move.bind(this);
-    this._up = this._up.bind(this);
-
-    canvas.addEventListener('pointerdown', this._down);
-    canvas.addEventListener('pointermove', this._move);
-    canvas.addEventListener('pointerup', this._up);
-    canvas.addEventListener('pointercancel', this._up);
-    canvas.addEventListener('pointerleave', this._up);
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('pointerdown', (e) => this.#down(e));
+    canvas.addEventListener('pointermove', (e) => this.#move(e));
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) =>
+      canvas.addEventListener(t, (e) => this.#up(e)));
 
     this.resize();
-    // แถบที่อยู่บนมือถือทำให้ window resize บ่อย -> ปรับเฉพาะเมื่อความกว้างเปลี่ยน
-    window.addEventListener('resize', () => {
-      if (this.canvas.clientWidth !== this.lastWidth) this.resize();
-    });
+    // วาดใหม่เฉพาะเมื่อ "ความกว้าง" เปลี่ยน (เลี่ยงการ resize จากแถบ URL บนมือถือ)
+    new ResizeObserver(() => {
+      const w = this.canvas.getBoundingClientRect().width;
+      if (Math.abs(w - this.lastWidth) > 1) this.resize();
+    }).observe(canvas);
   }
 
   resize() {
-    const dpr = Math.max(window.devicePixelRatio || 1, 1);
     const rect = this.canvas.getBoundingClientRect();
-    this.lastWidth = this.canvas.clientWidth;
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    this.lastWidth = rect.width;
     this.canvas.width = Math.round(rect.width * dpr);
     this.canvas.height = Math.round(rect.height * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
-    this.ctx.strokeStyle = '#0b1f3a';
-    this._redraw();
+    this.#redraw();
   }
 
-  _point(e) {
-    const r = this.canvas.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top, p: e.pressure || 0.5 };
-  }
-
-  _down(e) {
-    e.preventDefault();
-    this.canvas.setPointerCapture?.(e.pointerId);
-    this.current = [this._point(e)];
-    this.strokes.push(this.current);
-    this._drawDot(this.current[0]);
-  }
-
-  _move(e) {
-    if (!this.current) return;
-    e.preventDefault();
-    const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-    for (const ev of events) {
-      const pt = this._point(ev);
-      const prev = this.current[this.current.length - 1];
-      this.current.push(pt);
-      this._drawSegment(prev, pt);
-    }
-  }
-
-  _up() {
-    if (!this.current) return;
-    this.current = null;
-    this.onChange(this.isEmpty());
-  }
-
-  _width(p) { return 1.6 + p * 2.2; }
-
-  _drawDot(pt) {
-    const { ctx } = this;
-    ctx.beginPath();
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.arc(pt.x, pt.y, this._width(pt.p) / 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  _drawSegment(a, b) {
-    const { ctx } = this;
-    ctx.beginPath();
-    ctx.lineWidth = this._width((a.p + b.p) / 2);
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-  }
-
-  _redraw() {
-    const { ctx, canvas } = this;
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-    for (const s of this.strokes) {
-      this._drawDot(s[0]);
-      for (let i = 1; i < s.length; i++) this._drawSegment(s[i - 1], s[i]);
-    }
+  isEmpty() {
+    return this.strokes.length === 0;
   }
 
   clear() {
     this.strokes = [];
     this.current = null;
-    this._redraw();
-    this.onChange(true);
+    this.#redraw();
+    this.onChange?.(this);
   }
 
-  isEmpty() {
-    // นับว่าเซ็นแล้วเมื่อมีจุดรวมกันพอสมควร (กันการแตะโดนพลาด)
-    return this.strokes.reduce((n, s) => n + s.length, 0) < 6;
-  }
-
-  /** ส่งออกเป็น PNG พื้นขาว ครอปเฉพาะส่วนที่มีลายเซ็น และย่อให้ไฟล์เล็ก */
-  toBlob(maxWidth = 600) {
-    const pts = this.strokes.flat();
-    const pad = 12;
-    const minX = Math.max(0, Math.min(...pts.map((p) => p.x)) - pad);
-    const minY = Math.max(0, Math.min(...pts.map((p) => p.y)) - pad);
-    const maxX = Math.min(this.canvas.clientWidth, Math.max(...pts.map((p) => p.x)) + pad);
-    const maxY = Math.min(this.canvas.clientHeight, Math.max(...pts.map((p) => p.y)) + pad);
-    const w = maxX - minX;
-    const h = maxY - minY;
-    const scale = Math.min(1.5, maxWidth / w);
-
+  /** คืนค่า PNG Blob พื้นขาว ขนาดพอดี (ย่อให้กว้างไม่เกิน 600px เพื่อประหยัดพื้นที่) */
+  toBlob() {
+    const rect = this.canvas.getBoundingClientRect();
+    const scale = Math.min(1, 600 / rect.width) * 1.5;
     const out = document.createElement('canvas');
-    out.width = Math.round(w * scale);
-    out.height = Math.round(h * scale);
+    out.width = Math.round(rect.width * scale);
+    out.height = Math.round(rect.height * scale);
     const ctx = out.getContext('2d');
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, out.width, out.height);
-    const dpr = this.canvas.width / this.canvas.clientWidth;
-    ctx.drawImage(this.canvas, minX * dpr, minY * dpr, w * dpr, h * dpr, 0, 0, out.width, out.height);
+    this.#paint(ctx, out.width, out.height, scale);
     return new Promise((resolve) => out.toBlob(resolve, 'image/png'));
+  }
+
+  #point(e) {
+    const r = this.canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+  }
+
+  #down(e) {
+    if (e.button !== undefined && e.button > 0) return;
+    e.preventDefault();
+    this.canvas.setPointerCapture?.(e.pointerId);
+    this.current = [this.#point(e)];
+    this.strokes.push(this.current);
+    this.#redraw();
+  }
+
+  #move(e) {
+    if (!this.current) return;
+    e.preventDefault();
+    const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of events) this.current.push(this.#point(ev));
+    this.#redraw();
+  }
+
+  #up() {
+    if (!this.current) return;
+    this.current = null;
+    this.onChange?.(this);
+  }
+
+  #redraw() {
+    const r = this.canvas.getBoundingClientRect();
+    this.ctx.clearRect(0, 0, r.width, r.height);
+    this.#paint(this.ctx, r.width, r.height, 1);
+  }
+
+  /** วาดเส้นทั้งหมดแบบโค้งนุ่มนวล (quadratic midpoint smoothing) */
+  #paint(ctx, w, h, scale) {
+    ctx.strokeStyle = this.penColor;
+    ctx.fillStyle = this.penColor;
+    ctx.lineWidth = this.lineWidth * scale;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const s of this.strokes) {
+      const pts = s.map((p) => ({ x: p.x * w, y: p.y * h }));
+      if (pts.length === 1) {
+        ctx.beginPath();
+        ctx.arc(pts[0].x, pts[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2;
+        const my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      const last = pts[pts.length - 1];
+      ctx.lineTo(last.x, last.y);
+      ctx.stroke();
+    }
   }
 }

@@ -1,95 +1,93 @@
-/* =====================================================================
- *  image-compress.js — บีบอัด/ลดขนาดรูปฝั่ง Client ด้วย Canvas
- *  - ย่อด้านยาวสุดไม่เกิน maxDimension
- *  - พยายามใช้ WebP (เล็กกว่า) ถ้าเบราว์เซอร์ไม่รองรับจะใช้ JPEG
- *  - ลดคุณภาพ/ขนาดลงเรื่อยๆ จนไม่เกิน targetKB
- * ===================================================================== */
-const ImageCompressor = (() => {
-  let webpSupported = null;
+/**
+ * บีบอัด/ลดขนาดรูปภาพฝั่ง Client ด้วย Canvas ก่อนอัปโหลด
+ * - ย่อด้านยาวสุดไม่เกิน maxDim (คงสัดส่วน, แก้การหมุนภาพตาม EXIF)
+ * - เข้ารหัสเป็น WebP (ถ้าเบราว์เซอร์รองรับ) มิฉะนั้นเป็น JPEG
+ * - ลด quality ทีละขั้นจนขนาด <= targetBytes หรือถึง minQuality
+ *   ถ้ายังใหญ่อยู่ ย่อขนาดภาพลงอีกรอบ
+ */
 
-  function canvasToBlob(canvas, type, quality) {
-    return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
-  }
-
-  async function detectWebp() {
-    if (webpSupported !== null) return webpSupported;
+let webpSupport;
+function supportsWebp() {
+  if (webpSupport === undefined) {
     const c = document.createElement('canvas');
-    c.width = c.height = 2;
-    const b = await canvasToBlob(c, 'image/webp', 0.5);
-    webpSupported = !!b && b.type === 'image/webp';
-    return webpSupported;
+    c.width = c.height = 1;
+    webpSupport = c.toDataURL('image/webp').startsWith('data:image/webp');
   }
+  return webpSupport;
+}
 
-  function loadImage(file) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ไม่สามารถอ่านไฟล์รูปได้')); };
-      img.src = url; // เบราว์เซอร์สมัยใหม่หมุนรูปตาม EXIF ให้อัตโนมัติ
-    });
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('แปลงรูปภาพไม่สำเร็จ'))), type, quality));
+}
+
+async function decode(file) {
+  if ('createImageBitmap' in window) {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch { /* fallback ด้านล่าง */ }
   }
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ไม่สามารถอ่านไฟล์รูปภาพได้')); };
+    img.src = url;
+  });
+}
 
-  function draw(img, maxDim) {
-    const ratio = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-    const w = Math.max(1, Math.round(img.naturalWidth * ratio));
-    const h = Math.max(1, Math.round(img.naturalHeight * ratio));
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; // พื้นขาวกันรูปโปร่งใสกลายเป็นสีดำใน JPEG
-    ctx.fillRect(0, 0, w, h);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, 0, 0, w, h);
-    return canvas;
-  }
+function draw(source, maxDim) {
+  const w0 = source.width || source.naturalWidth;
+  const h0 = source.height || source.naturalHeight;
+  const scale = Math.min(1, maxDim / Math.max(w0, h0));
+  const w = Math.max(1, Math.round(w0 * scale));
+  const h = Math.max(1, Math.round(h0 * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; // พื้นขาวสำหรับภาพโปร่งใส (JPEG)
+  ctx.fillRect(0, 0, w, h);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, 0, 0, w, h);
+  return { canvas, w, h };
+}
 
-  /**
-   * @param {File|Blob} file
-   * @returns {Promise<{blob: Blob, width: number, height: number, ext: string}>}
-   */
-  async function compress(file, opts = {}) {
-    const maxDim0 = opts.maxDimension || CFG.IMAGE_MAX_DIMENSION || 1280;
-    const quality0 = opts.quality || CFG.IMAGE_QUALITY || 0.65;
-    const targetBytes = (opts.targetKB || CFG.IMAGE_TARGET_KB || 180) * 1024;
+export async function compressImage(file, {
+  maxDim = 1280, quality = 0.6, minQuality = 0.4, targetBytes = 200 * 1024,
+} = {}) {
+  if (!file.type.startsWith('image/')) throw new Error('ไฟล์ที่เลือกไม่ใช่รูปภาพ');
+  const source = await decode(file);
+  const type = supportsWebp() ? 'image/webp' : 'image/jpeg';
+  const ext = type === 'image/webp' ? 'webp' : 'jpg';
 
-    const type = (await detectWebp()) ? 'image/webp' : 'image/jpeg';
-    const img = await loadImage(file);
-
-    let maxDim = maxDim0;
-    let quality = quality0;
-    let canvas = draw(img, maxDim);
-    let blob = await canvasToBlob(canvas, type, quality);
-
-    // วนลดคุณภาพก่อน แล้วค่อยลดขนาดภาพ (สูงสุด 8 รอบ)
-    for (let i = 0; i < 8 && blob && blob.size > targetBytes; i++) {
-      if (quality > 0.42) {
-        quality = Math.round((quality - 0.1) * 100) / 100;
-      } else if (maxDim > 640) {
-        maxDim = Math.round(maxDim * 0.8);
-        canvas = draw(img, maxDim);
-      } else {
-        break;
-      }
-      blob = await canvasToBlob(canvas, type, quality);
+  let dim = maxDim;
+  let result;
+  // สูงสุด 3 รอบของการย่อขนาด
+  for (let round = 0; round < 3; round++) {
+    const { canvas, w, h } = draw(source, dim);
+    let q = quality;
+    let blob = await canvasToBlob(canvas, type, q);
+    while (blob.size > targetBytes && q > minQuality + 0.001) {
+      q = Math.max(minQuality, +(q - 0.1).toFixed(2));
+      blob = await canvasToBlob(canvas, type, q);
     }
-    if (!blob) throw new Error('บีบอัดรูปไม่สำเร็จ');
-
-    return {
-      blob,
-      width: canvas.width,
-      height: canvas.height,
-      ext: blob.type === 'image/webp' ? 'webp' : 'jpg',
-    };
+    canvas.width = canvas.height = 0; // คืนหน่วยความจำ (สำคัญบนมือถือ)
+    result = { blob, width: w, height: h, quality: q };
+    if (blob.size <= targetBytes || Math.max(w, h) <= 800) break;
+    dim = Math.round(Math.max(w, h) * 0.75);
   }
+  source.close?.();
 
-  function formatBytes(n) {
-    if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
-    return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  }
-
-  return { compress, formatBytes };
-})();
+  return {
+    blob: result.blob,
+    type,
+    ext,
+    width: result.width,
+    height: result.height,
+    quality: result.quality,
+    originalSize: file.size,
+    size: result.blob.size,
+  };
+}
