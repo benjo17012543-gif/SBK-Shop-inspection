@@ -1,9 +1,9 @@
-import { FLOORS } from './config.js';
-import { sb, getSession, signIn, renderAuthChip } from './supabase-client.js';
+import { FLOORS } from './config.js?v=20261128c';
+import { sb, getSession, signIn, renderAuthChip } from './supabase-client.js?v=20261128c';
 import {
   initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination, renderFloorTabs,
   toast, setBusy, openModal, confirmDialog, randomStoreCode, initSortToggle,
-} from './utils.js';
+} from './utils.js?v=20261128c';
 
 initLayout('stores');
 

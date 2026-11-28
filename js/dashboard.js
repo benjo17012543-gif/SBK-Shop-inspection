@@ -1,10 +1,10 @@
-import { FLOORS, STORAGE_BUCKET, NO_PROBLEM, PROBLEM_OPTIONS, SOLUTION_OPTIONS } from './config.js';
-import { sb, renderAuthChip } from './supabase-client.js';
+import { FLOORS, STORAGE_BUCKET, NO_PROBLEM, PROBLEM_OPTIONS, SOLUTION_OPTIONS } from './config.js?v=20261128c';
+import { sb, renderAuthChip } from './supabase-client.js?v=20261128c';
 import {
   initLayout, THAI_MONTHS, getFloor, compareStores, hasPest, escapeHtml, formatDateTime,
   paginate, renderPagination, renderFloorTabs, toast, setBusy, openModal,
   openLightbox, confirmDialog, initSortToggle, floorsInOrder,
-} from './utils.js';
+} from './utils.js?v=20261128c';
 
 initLayout('dashboard');
 

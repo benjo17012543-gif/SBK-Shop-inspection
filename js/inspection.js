@@ -1,15 +1,15 @@
 import {
   STORAGE_BUCKET, PROBLEM_OPTIONS, NO_PROBLEM, SOLUTION_OPTIONS, OTHER_SOLUTION,
   IMAGE_OPTIONS, MAX_PHOTOS,
-} from './config.js';
-import { sb, uploadBlob } from './supabase-client.js';
+} from './config.js?v=20261128c';
+import { sb, uploadBlob } from './supabase-client.js?v=20261128c';
 import {
   initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination,
   toast, setBusy, monthRange, monthKey, uuid, formatBytes, openLightbox,
-} from './utils.js';
-import { compressImage } from './image-compress.js';
-import { SignaturePad } from './signature-pad.js';
-import { initSplash } from './splash.js';
+} from './utils.js?v=20261128c';
+import { compressImage } from './image-compress.js?v=20261128c';
+import { SignaturePad } from './signature-pad.js?v=20261128c';
+import { initSplash } from './splash.js?v=20261128c';
 
 initLayout('inspect', { minimal: true }); // หน้าพนักงาน: ไม่มีแถบเมนูด้านบน
 

@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261128c';
 
 /** true เมื่อผู้ใช้ใส่ค่า URL/KEY จริงใน config.js แล้ว */
 export const isConfigured =

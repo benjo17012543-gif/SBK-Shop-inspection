@@ -4,7 +4,7 @@
  * - แถบความคืบหน้า = การโหลดรายชื่อร้าน (ready: Promise<number จำนวนร้าน>)
  * - กด "เข้าสู่ระบบ" แล้วซ่อน splash เข้าสู่ฟอร์ม
  */
-import { THAI_MONTHS } from './utils.js';
+import { THAI_MONTHS } from './utils.js?v=20261128c';
 
 const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 

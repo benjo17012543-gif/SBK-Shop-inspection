@@ -1,5 +1,5 @@
-import { FLOORS, PAGE_SIZE } from './config.js';
-import { isConfigured } from './supabase-client.js';
+import { FLOORS, PAGE_SIZE } from './config.js?v=20261128c';
+import { isConfigured } from './supabase-client.js?v=20261128c';
 
 export const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
