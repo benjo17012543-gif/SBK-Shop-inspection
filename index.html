@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
-  <title>บันทึกการตรวจร้านค้า | Pest Inspect</title>
+  <title>SBK Shop inspection</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +12,58 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
+  <!-- ===== หน้าต้อนรับ (Splash) ===== -->
+  <div class="splash" id="splash" role="dialog" aria-modal="true" aria-label="SBK Shop inspection">
+    <div class="splash-inner">
+      <div class="splash-logo" aria-hidden="true">
+        <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+        <svg class="splash-book" viewBox="0 0 120 140">
+          <defs>
+            <linearGradient id="bkCover" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/>
+            </linearGradient>
+          </defs>
+          <rect x="24" y="16" width="84" height="112" rx="11" fill="#0b5f58" opacity=".35"/>
+          <rect x="18" y="10" width="84" height="112" rx="11" fill="url(#bkCover)"/>
+          <rect x="30" y="20" width="64" height="92" rx="7" fill="#ffffff"/>
+          <rect x="38" y="29" width="38" height="6" rx="3" fill="#99f6e4"/>
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="38" y="45" width="11" height="11" rx="3" stroke="#0f766e" stroke-width="2.2"/>
+            <path d="M40.5 50.5l2.8 2.8 5.6-6.6" stroke="#16a34a" stroke-width="2.8"/>
+            <rect x="38" y="65" width="11" height="11" rx="3" stroke="#0f766e" stroke-width="2.2"/>
+            <path d="M40.5 70.5l2.8 2.8 5.6-6.6" stroke="#16a34a" stroke-width="2.8"/>
+            <rect x="38" y="85" width="11" height="11" rx="3" stroke="#0f766e" stroke-width="2.2"/>
+          </g>
+          <rect x="55" y="48" width="29" height="5" rx="2.5" fill="#cbd5e1"/>
+          <rect x="55" y="68" width="24" height="5" rx="2.5" fill="#cbd5e1"/>
+          <rect x="55" y="88" width="27" height="5" rx="2.5" fill="#e2e8f0"/>
+          <g fill="#f8fafc" stroke="#0f766e" stroke-width="2">
+            <rect x="11" y="24" width="15" height="7" rx="3.5"/><rect x="11" y="42" width="15" height="7" rx="3.5"/>
+            <rect x="11" y="60" width="15" height="7" rx="3.5"/><rect x="11" y="78" width="15" height="7" rx="3.5"/>
+            <rect x="11" y="96" width="15" height="7" rx="3.5"/>
+          </g>
+          <circle cx="94" cy="110" r="15" fill="#ffffff" stroke="#0f766e" stroke-width="3"/>
+          <circle cx="92" cy="108" r="6.5" fill="none" stroke="#0f766e" stroke-width="3"/>
+          <path d="M97 113l5 5" stroke="#0f766e" stroke-width="3.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="splash-shadow" aria-hidden="true"></div>
+
+      <h1 class="splash-name">SBK Shop inspection</h1>
+      <p class="splash-tag">ระบบบันทึกการตรวจร้านค้า &amp; ติดตามศัตรูพืช</p>
+
+      <div class="splash-clock" id="splashClock">--:--:--</div>
+      <div class="splash-date" id="splashDate"></div>
+      <div class="splash-progress" aria-hidden="true"><div class="splash-bar" id="splashBar"></div></div>
+      <div class="splash-status" id="splashStatus">กำลังเตรียมข้อมูล...</div>
+
+      <div class="splash-card">
+        <div class="splash-welcome">👋 ยินดีต้อนรับ</div>
+        <p>กดปุ่มด้านล่างเพื่อเข้าสู่ระบบบันทึกข้อมูล</p>
+        <button type="button" class="splash-btn" id="enterBtn">เข้าสู่ระบบ 🔓</button>
+      </div>
+    </div>
+  </div>
   <main class="container">
     <div class="page-head">
       <div>
@@ -30,9 +82,8 @@
 
         <div id="storePicker">
           <div class="search-box">
-            <input type="search" id="storeSearch" placeholder="🔍 ค้นหารหัสหรือชื่อร้าน (ค้นหาทุกชั้น)" autocomplete="off">
+            <input type="search" id="storeSearch" placeholder="🔍 ค้นหารหัสหรือชื่อร้าน (ค้นหาทุกชั้น)" autocomplete="off" enterkeyhint="search">
           </div>
-          <div class="floor-tabs" id="floorTabs" role="tablist" aria-label="เลือกชั้น"></div>
           <div class="store-grid" id="storeList"></div>
           <div class="pagination" id="storePager"></div>
         </div>

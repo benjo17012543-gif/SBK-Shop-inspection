@@ -1,21 +1,22 @@
 import {
-  STORAGE_BUCKET, FLOORS, PROBLEM_OPTIONS, NO_PROBLEM, SOLUTION_OPTIONS, OTHER_SOLUTION,
+  STORAGE_BUCKET, PROBLEM_OPTIONS, NO_PROBLEM, SOLUTION_OPTIONS, OTHER_SOLUTION,
   IMAGE_OPTIONS, MAX_PHOTOS,
 } from './config.js';
 import { sb, uploadBlob } from './supabase-client.js';
 import {
-  initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination, renderFloorTabs,
+  initLayout, getFloor, compareStores, escapeHtml, paginate, renderPagination,
   toast, setBusy, monthRange, monthKey, uuid, formatBytes, openLightbox,
 } from './utils.js';
 import { compressImage } from './image-compress.js';
 import { SignaturePad } from './signature-pad.js';
+import { initSplash } from './splash.js';
 
 initLayout('inspect', { minimal: true }); // หน้าพนักงาน: ไม่มีแถบเมนูด้านบน
 
 const $ = (id) => document.getElementById(id);
 const els = {
   form: $('inspectionForm'),
-  search: $('storeSearch'), tabs: $('floorTabs'), list: $('storeList'), pager: $('storePager'),
+  search: $('storeSearch'), list: $('storeList'), pager: $('storePager'),
   picker: $('storePicker'), selected: $('selectedStore'),
   problem: $('problem'), solutionSection: $('solutionSection'),
   method: $('solutionMethod'), detail: $('solutionDetail'), detailReq: $('detailReq'),
@@ -28,7 +29,6 @@ const els = {
 const state = {
   stores: [],
   inspectedIds: new Set(),
-  floor: FLOORS[0],
   search: '',
   page: 1,
   selected: null,
@@ -64,7 +64,6 @@ try { els.inspector.value = localStorage.getItem('inspectorName') || ''; } catch
 /* ---------- โหลดร้านค้า ---------- */
 async function loadStores() {
   if (!sb) { renderStores(); return; }
-  els.list.innerHTML = '<div class="empty"><span class="spinner dark"></span> กำลังโหลดรายชื่อร้าน...</div>';
   try {
     const now = new Date();
     const { start, end } = monthRange(now.getFullYear(), now.getMonth());
@@ -75,36 +74,40 @@ async function loadStores() {
     if (storesRes.error) throw storesRes.error;
     state.stores = (storesRes.data || []).sort(compareStores);
     state.inspectedIds = new Set((insRes.data || []).map((r) => r.store_id));
-    const firstFloor = FLOORS.find((f) => state.stores.some((s) => getFloor(s.store_code) === f));
-    if (firstFloor) state.floor = firstFloor;
   } catch (err) {
     console.error(err);
     toast(`โหลดรายชื่อร้านไม่สำเร็จ: ${err.message}`, 'error');
   }
   renderStores();
+  return state.stores.length;
 }
 
+/** ค้นหาร้าน: แสดงผลเฉพาะเมื่อพิมพ์ (ค้นทุกชั้นทั้งรหัสและชื่อ) */
 function renderStores() {
   const q = state.search.trim().toLowerCase();
-  const counts = {};
-  state.stores.forEach((s) => { const f = getFloor(s.store_code); counts[f] = (counts[f] || 0) + 1; });
-
-  // ค้นหา → ค้นทุกชั้น ; ไม่ค้นหา → แสดงตามแท็บชั้น
-  els.tabs.classList.toggle('dimmed', !!q);
-  renderFloorTabs(els.tabs, counts, q ? null : state.floor, (f) => {
-    state.floor = f; state.page = 1; state.search = ''; els.search.value = ''; renderStores();
+  if (!sb) {
+    els.list.innerHTML = '<div class="empty">ยังไม่ได้เชื่อมต่อฐานข้อมูล</div>';
+    els.pager.innerHTML = '';
+    return;
+  }
+  if (!q) {
+    els.list.innerHTML = `<div class="search-hint">⌨️ พิมพ์รหัสร้าน (เช่น <b>B-516</b>) หรือชื่อร้าน เพื่อค้นหา
+      <span class="muted small">มีร้านทั้งหมด ${state.stores.length} ร้าน</span></div>`;
+    els.pager.innerHTML = '';
+    return;
+  }
+  const terms = q.split(/\s+/).filter(Boolean);
+  const filtered = state.stores.filter((s) => {
+    const hay = `${s.store_code} ${s.store_name} ชั้น ${getFloor(s.store_code)}`.toLowerCase();
+    return terms.every((t) => hay.includes(t));
   });
-
-  const filtered = state.stores.filter((s) => (q
-    ? `${s.store_code} ${s.store_name}`.toLowerCase().includes(q)
-    : getFloor(s.store_code) === state.floor));
+  // รหัสร้านที่ตรงทั้งหมด/ขึ้นต้นด้วยคำค้น ขึ้นก่อน
+  filtered.sort((a, b) => Number(!a.store_code.toLowerCase().startsWith(q)) - Number(!b.store_code.toLowerCase().startsWith(q)));
   const pg = paginate(filtered, state.page);
   state.page = pg.page;
 
-  if (!sb) {
-    els.list.innerHTML = '<div class="empty">ยังไม่ได้เชื่อมต่อฐานข้อมูล</div>';
-  } else if (!pg.items.length) {
-    els.list.innerHTML = `<div class="empty">${q ? 'ไม่พบร้านที่ค้นหา' : 'ไม่มีร้านในชั้นนี้'}</div>`;
+  if (!pg.items.length) {
+    els.list.innerHTML = '<div class="empty">ไม่พบร้านที่ค้นหา</div>';
   } else {
     els.list.innerHTML = pg.items.map((s) => {
       const done = state.inspectedIds.has(s.id);
@@ -112,7 +115,7 @@ function renderStores() {
         <button type="button" class="store-item ${state.selected?.id === s.id ? 'active' : ''}" data-id="${s.id}">
           <span class="store-code">${escapeHtml(s.store_code)}</span>
           <span class="store-name">${escapeHtml(s.store_name)}</span>
-          ${q ? `<span class="tag">ชั้น ${getFloor(s.store_code)}</span>` : ''}
+          <span class="tag">ชั้น ${getFloor(s.store_code)}</span>
           ${done ? '<span class="badge badge-ok" title="ตรวจแล้วในเดือนนี้">✓ ตรวจแล้ว</span>' : ''}
         </button>`;
     }).join('');
@@ -128,6 +131,7 @@ function selectStore(store) {
     els.selected.classList.add('hidden');
     els.picker.classList.remove('hidden');
     renderStores();
+    els.search.focus({ preventScroll: true });
     return;
   }
   const done = state.inspectedIds.has(store.id);
@@ -288,9 +292,10 @@ function resetForm() {
   renderPhotos();
   sig.clear();
   syncSolution();
+  els.search.value = ''; state.search = '';
   selectStore(null);
 }
 
 renderPhotos();
 syncSolution();
-loadStores();
+initSplash(loadStores());
