@@ -3,8 +3,8 @@
  *  หาได้จาก Supabase Dashboard → Project Settings → API
  *  (anon key เปิดเผยได้ ความปลอดภัยควบคุมด้วย Row Level Security ใน schema.sql)
  * ===================================================================== */
-export const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
-export const SUPABASE_ANON_KEY = 'YOUR-SUPABASE-ANON-KEY';
+export const SUPABASE_URL = 'https://tkklsupaxezxnxpacidk.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_Ji9G34XqBU8-zHAyRRevQQ_IIWtUuUz';
 
 /* ---------------------------------------------------------------------
  *  ค่าตั้งค่าอื่นๆ (แก้ไขได้ตามต้องการ)
